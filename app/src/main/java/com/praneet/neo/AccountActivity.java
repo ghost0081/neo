@@ -65,21 +65,22 @@ public class AccountActivity extends AppCompatActivity {
     }
     
     private void setupClickListeners() {
-        // Toggle between login and register
         toggleMode.setOnClickListener(v -> toggleMode());
-        
-        // Login button
         loginButton.setOnClickListener(v -> handleLogin());
-        
-        // Sign up button (on login form)
-        Button signupButton = findViewById(R.id.signup_button);
-        signupButton.setOnClickListener(v -> showRegistrationForm());
-        
-        // Register button
         registerButton.setOnClickListener(v -> handleRegistration());
-        
-        // Logout button
         logoutButton.setOnClickListener(v -> handleLogout());
+        
+        // Add Edit Profile button functionality with debugging
+        Button editProfileButton = findViewById(R.id.edit_profile_button);
+        if (editProfileButton != null) {
+            Log.d("AccountActivity", "Edit Profile button found, setting click listener");
+            editProfileButton.setOnClickListener(v -> {
+                Log.d("AccountActivity", "Edit Profile button clicked!");
+                handleEditProfile();
+            });
+        } else {
+            Log.e("AccountActivity", "Edit Profile button not found!");
+        }
     }
     
     private void toggleMode() {
@@ -155,7 +156,7 @@ public class AccountActivity extends AppCompatActivity {
         String address = registerAddress.getText().toString().trim();
         String password = registerPassword.getText().toString().trim();
         
-        if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || password.isEmpty()) {
+        if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             registerStatus.setText("Please fill in all fields");
             registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
             return;
@@ -168,44 +169,91 @@ public class AccountActivity extends AppCompatActivity {
             return;
         }
         
-        if (password.length() < 6) {
-            registerStatus.setText("Password must be at least 6 characters");
-            registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            return;
-        }
+        // Check if this is edit mode (password field is empty or button text is "Update Profile")
+        boolean isEditMode = password.isEmpty() || registerButton.getText().toString().equals("Update Profile");
         
+        if (isEditMode) {
+            // Handle profile update
+            handleProfileUpdate(name, phone, address);
+        } else {
+            // Handle new registration
+            if (password.length() < 6) {
+                registerStatus.setText("Password must be at least 6 characters");
+                registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                return;
+            }
+            
+            // Show loading
+            registerButton.setEnabled(false);
+            registerButton.setText("Creating Account...");
+            registerStatus.setText("");
+            
+            SupabaseManager.signUp(email, password, name, phone, address, new SupabaseManager.AuthCallback() {
+                @Override
+                public void onSuccess(String message) {
+                    runOnUiThread(() -> {
+                        registerStatus.setText(message);
+                        registerStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                        registerButton.setEnabled(true);
+                        registerButton.setText("Create Account");
+                        
+                        // Store user data for later use
+                        SupabaseManager.storeUserData(name, phone, address);
+                        
+                        // Clear form
+                        clearRegistrationForm();
+                        
+                        // Show success message
+                        Toast.makeText(AccountActivity.this, message, Toast.LENGTH_LONG).show();
+                        
+                        // If account was created and signed in successfully, show profile
+                        if (message.contains("successfully")) {
+                            showUserProfile();
+                        } else {
+                            // Switch to login mode and pre-fill email
+                            isLoginMode = true;
+                            toggleMode();
+                            loginEmail.setText(email);
+                        }
+                    });
+                }
+                
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        registerStatus.setText(error);
+                        registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                        registerButton.setEnabled(true);
+                        registerButton.setText("Create Account");
+                    });
+                }
+            });
+        }
+    }
+    
+    private void handleProfileUpdate(String name, String phone, String address) {
         // Show loading
         registerButton.setEnabled(false);
-        registerButton.setText("Creating Account...");
+        registerButton.setText("Updating...");
         registerStatus.setText("");
         
-        SupabaseManager.signUp(email, password, name, phone, address, new SupabaseManager.AuthCallback() {
+        SupabaseManager.updateUserProfile(name, phone, address, new SupabaseManager.AuthCallback() {
             @Override
             public void onSuccess(String message) {
                 runOnUiThread(() -> {
                     registerStatus.setText(message);
                     registerStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
                     registerButton.setEnabled(true);
-                    registerButton.setText("Create Account");
+                    registerButton.setText("Update Profile");
                     
-                    // Store user data for later use
+                    // Store updated user data
                     SupabaseManager.storeUserData(name, phone, address);
                     
-                    // Clear form
-                    clearRegistrationForm();
-                    
                     // Show success message
-                    Toast.makeText(AccountActivity.this, message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(AccountActivity.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
                     
-                    // If account was created and signed in successfully, show profile
-                    if (message.contains("successfully")) {
-                        showUserProfile();
-                    } else {
-                        // Switch to login mode and pre-fill email
-                        isLoginMode = true;
-                        toggleMode();
-                        loginEmail.setText(email);
-                    }
+                    // Return to profile view
+                    showUserProfile();
                 });
             }
             
@@ -215,7 +263,7 @@ public class AccountActivity extends AppCompatActivity {
                     registerStatus.setText(error);
                     registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
                     registerButton.setEnabled(true);
-                    registerButton.setText("Create Account");
+                    registerButton.setText("Update Profile");
                 });
             }
         });
@@ -377,6 +425,57 @@ public class AccountActivity extends AppCompatActivity {
         // Clear any previous status messages
         loginStatus.setText("");
         registerStatus.setText("");
+    }
+
+    private void handleEditProfile() {
+        Log.d("AccountActivity", "handleEditProfile called");
+        
+        // Show registration form directly (don't use toggleMode)
+        loginForm.setVisibility(View.GONE);
+        registerForm.setVisibility(View.VISIBLE);
+        userProfile.setVisibility(View.GONE);
+        isLoginMode = false;
+        toggleMode.setText("Already have an account? Sign In");
+        
+        // Pre-fill the form with current profile data
+        String currentName = SupabaseManager.getStoredUserName();
+        String currentPhone = SupabaseManager.getStoredUserPhone();
+        String currentAddress = SupabaseManager.getStoredUserAddress();
+        String currentEmail = SupabaseManager.getCurrentUserEmail();
+        
+        Log.d("AccountActivity", "Current data - Name: " + currentName + ", Phone: " + currentPhone + ", Address: " + currentAddress + ", Email: " + currentEmail);
+        
+        // Clear the form first
+        registerName.setText("");
+        registerEmail.setText("");
+        registerPhone.setText("");
+        registerAddress.setText("");
+        registerPassword.setText("");
+        
+        // Then fill with current data
+        registerName.setText(currentName);
+        registerEmail.setText(currentEmail);
+        registerPhone.setText(currentPhone);
+        registerAddress.setText(currentAddress);
+        
+        // Change button text to indicate update mode
+        registerButton.setText("Update Profile");
+        
+        // Update the form title
+        TextView registerTitle = findViewById(R.id.register_title);
+        if (registerTitle != null) {
+            registerTitle.setText("Edit Profile");
+            Log.d("AccountActivity", "Form title updated to 'Edit Profile'");
+        } else {
+            Log.e("AccountActivity", "Register title not found!");
+        }
+        
+        // Clear any previous status messages
+        registerStatus.setText("");
+        
+        // Show message
+        Toast.makeText(this, "Edit your profile information", Toast.LENGTH_SHORT).show();
+        Log.d("AccountActivity", "Edit profile form displayed");
     }
 
     // Email validation helper method
