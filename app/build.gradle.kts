@@ -47,4 +47,15 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.gson)
     implementation(libs.coil)
+    
+    // Supabase dependencies
+    implementation("io.github.jan-tennert.supabase:postgrest-kt:2.1.3")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt:2.1.3")
+    implementation("io.github.jan-tennert.supabase:realtime-kt:2.1.3")
+    implementation("io.github.jan-tennert.supabase:storage-kt:2.1.3")
+    
+    // HTTP client
+    implementation("io.ktor:ktor-client-android:2.3.7")
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-cio:2.3.7")
 }

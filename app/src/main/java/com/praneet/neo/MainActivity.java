@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import android.content.Intent;
 import android.widget.HorizontalScrollView;
+import com.praneet.neo.SupabaseManager;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -38,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        // Initialize Supabase
+        SupabaseManager.initialize(this);
         
         // Open cart page when cart button is clicked
         LinearLayout cartButton = findViewById(R.id.bottom_nav_cart);
@@ -465,6 +469,15 @@ public class MainActivity extends AppCompatActivity {
                 params2.setMargins(4, 8, 8, 8);
                 productView2.setLayoutParams(params2);
                 row.addView(productView2);
+            } else {
+                // Add invisible placeholder to keep layout consistent
+                View placeholder = new View(this);
+                LinearLayout.LayoutParams params2 = new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                params2.setMargins(4, 8, 8, 8);
+                placeholder.setLayoutParams(params2);
+                placeholder.setVisibility(View.INVISIBLE);
+                row.addView(placeholder);
             }
             
             gridContainer.addView(row);
