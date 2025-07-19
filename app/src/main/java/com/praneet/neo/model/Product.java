@@ -1,8 +1,9 @@
 package com.praneet.neo.model;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Product {
+public class Product implements Serializable {
     private int id;
     private String title;
     private String description;

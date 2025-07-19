@@ -23,6 +23,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name=".ProductDetailActivity"
+            android:exported="false"
+            android:label="Product Details" />
+        <activity
+            android:name=".CartActivity"
+            android:exported="false"
+            android:label="Cart" />
+        <activity
+            android:name=".FavoriteActivity"
+            android:exported="false"
+            android:label="Favorites" />
+        <activity
+            android:name=".OrderActivity"
+            android:exported="false"
+            android:label="Orders" />
+        <activity
+            android:name=".AccountActivity"
+            android:exported="false"
+            android:label="Account" />
     </application>
 
 </manifest>

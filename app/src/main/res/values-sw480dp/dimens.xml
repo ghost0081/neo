@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Medium screen responsive spacing -->
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+    <dimen name="spacing_xlarge">32dp</dimen>
+
+    <!-- Medium screen responsive padding -->
+    <dimen name="header_padding">20dp</dimen>
+    <dimen name="section_padding">16dp</dimen>
+    <dimen name="search_padding">12dp</dimen>
+    <dimen name="bottom_nav_padding">16dp</dimen>
+    <dimen name="bottom_nav_item_padding">8dp</dimen>
+    <dimen name="icon_padding">8dp</dimen>
+
+    <!-- Medium screen responsive text sizes -->
+    <dimen name="title_text_size">24sp</dimen>
+    <dimen name="section_title_size">20sp</dimen>
+    <dimen name="body_text_size">16sp</dimen>
+    <dimen name="caption_text_size">14sp</dimen>
+    <dimen name="small_text_size">12sp</dimen>
+    <dimen name="icon_text_size">20sp</dimen>
+    <dimen name="search_icon_size">16sp</dimen>
+    <dimen name="bottom_nav_icon_size">20sp</dimen>
+    <dimen name="bottom_nav_text_size">12sp</dimen>
+
+    <!-- Medium screen responsive card dimensions -->
+    <dimen name="card_corner_radius">8dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_margin">8dp</dimen>
+
+    <!-- Medium screen responsive button dimensions -->
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_padding_horizontal">24dp</dimen>
+    <dimen name="button_padding_vertical">12dp</dimen>
+    <dimen name="button_text_size">14sp</dimen>
+
+    <!-- Medium screen responsive image dimensions -->
+    <dimen name="product_image_size">200dp</dimen>
+    <dimen name="product_image_height">200dp</dimen>
+    <dimen name="product_icon_size">80dp</dimen>
+    <dimen name="product_icon_large">120dp</dimen>
+</resources> 

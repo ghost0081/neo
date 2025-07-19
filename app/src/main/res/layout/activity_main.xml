@@ -3,103 +3,168 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F8FF">
+    android:background="#F8F9FA">
 
-    <!-- Header -->
+    <!-- Header with User Profile -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:background="#FFFFFF">
+        android:background="#FFFFFF"
+        android:elevation="4dp"
+        android:padding="@dimen/header_padding">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- User Profile Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fresh Groceries"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#2C3E50" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="@dimen/spacing_medium">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Fresh Market"
-            android:textSize="16sp"
-            android:textColor="#7F8C8D"
-            android:layout_marginTop="4dp" />
+            <!-- Profile Picture -->
+            <LinearLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/circle_background"
+                android:gravity="center"
+                android:layout_marginEnd="@dimen/spacing_medium">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👤"
+                    android:textSize="24sp" />
+            </LinearLayout>
+
+            <!-- Welcome Text -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome"
+                    android:textSize="@dimen/small_text_size"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tariqul Islam"
+                    android:textSize="@dimen/body_text_size"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A" />
+            </LinearLayout>
+
+            <!-- Notification Bell -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔔"
+                android:textSize="24sp"
+                android:padding="8dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
 
         <!-- Search Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:background="#F8F9FA"
-            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:padding="@dimen/search_padding"
             android:gravity="center_vertical">
 
             <TextView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="🔍"
-                android:gravity="center"
-                android:layout_marginEnd="8dp" />
+                android:textSize="@dimen/search_icon_size"
+                android:layout_marginEnd="@dimen/spacing_small" />
 
             <EditText
                 android:id="@+id/search_input"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Search items here"
+                android:hint="Search here..."
+                android:textSize="@dimen/body_text_size"
                 android:background="@null"
-                android:textSize="16sp" />
-
-            <TextView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:text="⚙️"
-                android:gravity="center"
-                android:layout_marginStart="8dp" />
+                android:textColor="#1A1A1A"
+                android:textColorHint="#9E9E9E" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Dynamic Category Navbar -->
-    <HorizontalScrollView
+    <!-- Category Navigation -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:background="#FFFFFF"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:elevation="2dp"
+        android:padding="@dimen/section_padding">
 
         <LinearLayout
             android:id="@+id/category_container"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical" />
+    </LinearLayout>
 
-            <!-- Category buttons will be added dynamically here -->
 
-        </LinearLayout>
-    </HorizontalScrollView>
 
-    <!-- Product List -->
-    <ScrollView
+    <!-- Popular Items Section -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:padding="@dimen/section_padding">
 
+        <!-- Section Header -->
         <LinearLayout
-            android:id="@+id/product_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="@dimen/spacing_medium">
 
-            <!-- Products will be loaded dynamically here -->
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Popular Items"
+                android:textSize="@dimen/section_title_size"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View All"
+                android:textSize="@dimen/body_text_size"
+                android:textColor="#4CAF50"
+                android:padding="8dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless" />
         </LinearLayout>
-    </ScrollView>
+
+        <!-- Product Grid -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/product_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+    </LinearLayout>
 
     <!-- Bottom Navigation -->
     <LinearLayout
@@ -107,75 +172,142 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="#FFFFFF"
-        android:padding="16dp">
+        android:elevation="8dp"
+        android:padding="@dimen/bottom_nav_padding">
 
+        <!-- Home -->
         <LinearLayout
+            android:id="@+id/bottom_nav_home"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:padding="@dimen/bottom_nav_item_padding">
 
             <TextView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="🏠"
-                android:gravity="center"
-                android:textSize="20sp" />
+                android:textSize="@dimen/bottom_nav_icon_size"
+                android:textColor="#4CAF50" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Home"
-                android:textSize="12sp"
-                android:textColor="#3498DB"
-                android:layout_marginTop="4dp" />
+                android:textSize="@dimen/bottom_nav_text_size"
+                android:textColor="#4CAF50"
+                android:layout_marginTop="@dimen/spacing_small" />
         </LinearLayout>
 
+        <!-- Favorite -->
         <LinearLayout
+            android:id="@+id/bottom_nav_favorite"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:padding="@dimen/bottom_nav_item_padding">
 
             <TextView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:text="🛒"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❤️"
+                android:textSize="@dimen/bottom_nav_icon_size" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Favorite"
+                android:textSize="@dimen/bottom_nav_text_size"
+                android:textColor="#7F8C8D"
+                android:layout_marginTop="@dimen/spacing_small" />
+        </LinearLayout>
+
+        <!-- Cart (Central) -->
+        <LinearLayout
+            android:id="@+id/bottom_nav_cart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="@dimen/bottom_nav_item_padding">
+
+            <LinearLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/circle_background_green"
                 android:gravity="center"
-                android:textSize="20sp" />
+                android:elevation="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛒"
+                    android:textSize="24sp"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cart"
-                android:textSize="12sp"
+                android:textSize="@dimen/bottom_nav_text_size"
                 android:textColor="#7F8C8D"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="@dimen/spacing_small" />
         </LinearLayout>
 
+        <!-- Order -->
         <LinearLayout
+            android:id="@+id/bottom_nav_order"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:text="👤"
-                android:gravity="center"
-                android:textSize="20sp" />
+            android:gravity="center"
+            android:padding="@dimen/bottom_nav_item_padding">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Profile"
-                android:textSize="12sp"
+                android:text="📋"
+                android:textSize="@dimen/bottom_nav_icon_size" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order"
+                android:textSize="@dimen/bottom_nav_text_size"
                 android:textColor="#7F8C8D"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="@dimen/spacing_small" />
+        </LinearLayout>
+
+        <!-- Account -->
+        <LinearLayout
+            android:id="@+id/bottom_nav_account"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="@dimen/bottom_nav_item_padding">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👤"
+                android:textSize="@dimen/bottom_nav_icon_size" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Account"
+                android:textSize="@dimen/bottom_nav_text_size"
+                android:textColor="#7F8C8D"
+                android:layout_marginTop="@dimen/spacing_small" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout> 
