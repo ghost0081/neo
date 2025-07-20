@@ -472,6 +472,14 @@
                     android:background="#F44336"
                     android:textColor="@android:color/white"
                     android:padding="12dp" />
+
+                <Button
+                    android:id="@+id/button_manage_users"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Users"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

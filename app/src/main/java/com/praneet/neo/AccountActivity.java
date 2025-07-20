@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.ViewGroup;
 import android.view.Gravity;
+import android.content.Intent;
 
 public class AccountActivity extends AppCompatActivity {
     
@@ -118,6 +119,12 @@ public class AccountActivity extends AppCompatActivity {
         } else {
             Log.e("AccountActivity", "Edit Profile button not found!");
         }
+
+        Button manageUsersButton = findViewById(R.id.button_manage_users);
+        manageUsersButton.setOnClickListener(v -> {
+            Intent intent = new Intent(AccountActivity.this, AdminUserActivity.class);
+            startActivity(intent);
+        });
     }
     
     private void toggleMode() {
@@ -584,7 +591,7 @@ public class AccountActivity extends AppCompatActivity {
             Button usersBtn = new Button(this);
             usersBtn.setText("Manage Users");
             styleAdminButton(usersBtn);
-            usersBtn.setOnClickListener(v -> Toast.makeText(this, "Manage Users (admin)", Toast.LENGTH_SHORT).show());
+            usersBtn.setOnClickListener(v -> startActivity(new Intent(this, AdminUserActivity.class)));
 
             card.addView(productsBtn);
             card.addView(ordersBtn);

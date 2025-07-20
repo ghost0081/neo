@@ -55,6 +55,7 @@
         <activity
             android:name=".AdminProductActivity"
             android:exported="false" />
+        <activity android:name=".AdminUserActivity" />
     </application>
 
 </manifest>

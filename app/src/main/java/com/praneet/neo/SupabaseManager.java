@@ -1287,4 +1287,79 @@ public class SupabaseManager {
     public static boolean isCurrentUserAdmin() {
         return cachedIsAdmin != null && cachedIsAdmin;
     }
+
+    // Fetch total user count from profiles table
+    public static void fetchUserCount(UserCountCallback callback) {
+        new Thread(() -> {
+            try {
+                String accessToken = getStoredAccessToken();
+                if (accessToken == null || accessToken.isEmpty()) {
+                    callback.onError("Not signed in");
+                    return;
+                }
+                Request request = new Request.Builder()
+                    .url(SUPABASE_URL + "/rest/v1/profiles?select=id")
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + accessToken)
+                    .addHeader("Content-Type", "application/json")
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        JSONArray arr = new JSONArray(responseBody);
+                        callback.onSuccess(arr.length());
+                    } else {
+                        callback.onError("Failed to fetch user count: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+    public interface UserCountCallback {
+        void onSuccess(int count);
+        void onError(String error);
+    }
+
+    // Fetch all user names from profiles table
+    public static void fetchAllUserNames(UserNamesCallback callback) {
+        new Thread(() -> {
+            try {
+                String accessToken = getStoredAccessToken();
+                if (accessToken == null || accessToken.isEmpty()) {
+                    callback.onError("Not signed in");
+                    return;
+                }
+                Request request = new Request.Builder()
+                    .url(SUPABASE_URL + "/rest/v1/profiles?select=name")
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + accessToken)
+                    .addHeader("Content-Type", "application/json")
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        JSONArray arr = new JSONArray(responseBody);
+                        java.util.List<String> names = new java.util.ArrayList<>();
+                        for (int i = 0; i < arr.length(); i++) {
+                            String name = arr.getJSONObject(i).optString("name", "(No Name)");
+                            names.add(name);
+                        }
+                        callback.onSuccess(names);
+                    } else {
+                        callback.onError("Failed to fetch user names: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+    public interface UserNamesCallback {
+        void onSuccess(java.util.List<String> names);
+        void onError(String error);
+    }
 } 
