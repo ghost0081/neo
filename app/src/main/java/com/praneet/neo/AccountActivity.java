@@ -70,6 +70,18 @@ public class AccountActivity extends AppCompatActivity {
         registerButton.setOnClickListener(v -> handleRegistration());
         logoutButton.setOnClickListener(v -> handleLogout());
         
+        // Add Create New Account button functionality
+        Button signupButton = findViewById(R.id.signup_button);
+        if (signupButton != null) {
+            Log.d("AccountActivity", "Signup button found, setting click listener");
+            signupButton.setOnClickListener(v -> {
+                Log.d("AccountActivity", "Create New Account button clicked!");
+                showRegistrationForm();
+            });
+        } else {
+            Log.e("AccountActivity", "Signup button not found!");
+        }
+        
         // Add Edit Profile button functionality with debugging
         Button editProfileButton = findViewById(R.id.edit_profile_button);
         if (editProfileButton != null) {
@@ -422,9 +434,23 @@ public class AccountActivity extends AppCompatActivity {
         isLoginMode = false;
         toggleMode.setText("Already have an account? Sign In");
         
+        // Clear the form for new registration
+        clearRegistrationForm();
+        
+        // Reset button text for new account creation
+        registerButton.setText("Create Account");
+        
+        // Reset form title
+        TextView registerTitle = findViewById(R.id.register_title);
+        if (registerTitle != null) {
+            registerTitle.setText("Create Account");
+        }
+        
         // Clear any previous status messages
         loginStatus.setText("");
         registerStatus.setText("");
+        
+        Log.d("AccountActivity", "Registration form displayed for new account creation");
     }
 
     private void handleEditProfile() {
