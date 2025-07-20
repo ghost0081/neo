@@ -25,6 +25,7 @@ import com.praneet.neo.SupabaseManager;
 import com.praneet.neo.ProductDatabaseManager;
 import android.widget.ImageButton;
 import android.graphics.Color;
+import android.widget.FrameLayout;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -537,7 +538,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private View createProductView(Product product) {
-        // Product card container (grid style)
+        // Card container with overlay support
+        FrameLayout cardFrame = new FrameLayout(this);
+        FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT);
+        cardFrame.setLayoutParams(frameParams);
+
+        // Main card content
         LinearLayout cardContainer = new LinearLayout(this);
         cardContainer.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -546,21 +554,17 @@ public class MainActivity extends AppCompatActivity {
         cardContainer.setBackgroundColor(getResources().getColor(android.R.color.white));
         cardContainer.setElevation(getResources().getDimension(R.dimen.card_elevation));
         cardContainer.setPadding(12, 12, 12, 12);
-        
-        // Add margin between cards
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         int cardMargin = (int) getResources().getDimension(R.dimen.card_margin);
         cardParams.setMargins(cardMargin, cardMargin, cardMargin, cardMargin);
         cardContainer.setLayoutParams(cardParams);
-        
-        // Make the entire card clickable
         cardContainer.setClickable(true);
         cardContainer.setFocusable(true);
         cardContainer.setBackgroundResource(android.R.drawable.list_selector_background);
         cardContainer.setOnClickListener(v -> openProductDetail(product));
-        
+
         // Product image container
         LinearLayout imageContainer = new LinearLayout(this);
         imageContainer.setLayoutParams(new LinearLayout.LayoutParams(
@@ -569,8 +573,6 @@ public class MainActivity extends AppCompatActivity {
         imageContainer.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light));
         imageContainer.setGravity(android.view.Gravity.CENTER);
         imageContainer.setPadding(16, 16, 16, 16);
-        
-        // Product image placeholder
         TextView imageView = new TextView(this);
         imageView.setLayoutParams(new LinearLayout.LayoutParams(60, 60));
         imageView.setText("🛍️");
@@ -578,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
         imageView.setGravity(android.view.Gravity.CENTER);
         imageView.setBackgroundColor(getResources().getColor(android.R.color.white));
         imageContainer.addView(imageView);
-        
+
         // Product details container
         LinearLayout detailsContainer = new LinearLayout(this);
         detailsContainer.setLayoutParams(new LinearLayout.LayoutParams(
@@ -586,30 +588,88 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT));
         detailsContainer.setOrientation(LinearLayout.VERTICAL);
         detailsContainer.setPadding(0, 12, 0, 0);
-        
-        // Favorite (heart) button
-        ImageButton favButton = new ImageButton(this);
-        favButton.setBackgroundColor(Color.TRANSPARENT);
-        favButton.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
-        favButton.setPadding(0, 0, 0, 0);
-        LinearLayout.LayoutParams favParams = new LinearLayout.LayoutParams(
-            80, 80);
-        favParams.setMargins(0, 0, 0, 0);
-        favButton.setLayoutParams(favParams);
+
+        // Product title
+        TextView titleView = new TextView(this);
+        titleView.setText(product.getTitle());
+        titleView.setTextSize(14);
+        titleView.setTextColor(getResources().getColor(android.R.color.black));
+        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+        titleView.setMaxLines(2);
+        titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+        // Product description
+        TextView descView = new TextView(this);
+        descView.setText("Original fresh " + product.getTitle().toLowerCase());
+        descView.setTextSize(10);
+        descView.setTextColor(getResources().getColor(android.R.color.darker_gray));
+        descView.setMaxLines(1);
+        descView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+        // Price
+        TextView priceView = new TextView(this);
+        priceView.setText("$" + String.format("%.2f", product.getPrice()) + "/Kg");
+        priceView.setTextSize(12);
+        priceView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+        priceView.setTypeface(null, android.graphics.Typeface.BOLD);
+        priceView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams priceParams = (LinearLayout.LayoutParams) priceView.getLayoutParams();
+        priceParams.setMargins(0, 0, 0, 16);
+        priceView.setLayoutParams(priceParams);
+
+        // Add to Cart button (pill style)
+        Button addToCartButton = new Button(this);
+        addToCartButton.setText("Add to Cart");
+        addToCartButton.setTextSize(16);
+        addToCartButton.setTypeface(null, android.graphics.Typeface.BOLD);
+        addToCartButton.setAllCaps(true);
+        addToCartButton.setTextColor(getResources().getColor(android.R.color.white));
+        addToCartButton.setBackgroundResource(R.drawable.button_green_rounded);
+        addToCartButton.setPadding(0, 36, 0, 36);
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        btnParams.setMargins(0, 16, 0, 0);
+        addToCartButton.setLayoutParams(btnParams);
+        addToCartButton.setOnClickListener(v -> {
+            if (!SupabaseManager.isSignedIn()) {
+                Toast.makeText(this, "Please log in or sign up first.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            addToCart(product);
+            Toast.makeText(this, "Added to cart: " + product.getTitle() + " (ID: " + product.getId() + ")", Toast.LENGTH_SHORT).show();
+        });
+
+        // Favorite (heart) button (top-right, overlay)
+        FrameLayout.LayoutParams heartParams = new FrameLayout.LayoutParams(90, 90);
+        heartParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        heartParams.setMargins(0, 16, 16, 0);
+        LinearLayout heartCircle = new LinearLayout(this);
+        heartCircle.setLayoutParams(heartParams);
+        heartCircle.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
+        heartCircle.setPadding(0, 0, 0, 0);
+        heartCircle.setGravity(android.view.Gravity.CENTER);
+        heartCircle.setElevation(8f);
+        TextView heartIcon = new TextView(this);
         boolean isFav = favoriteProductIds.contains((long) product.getId());
-        favButton.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
-        favButton.setColorFilter(isFav ? Color.RED : Color.GRAY);
-        favButton.setContentDescription(isFav ? "Remove from favorites" : "Add to favorites");
-        favButton.setOnClickListener(v -> {
+        heartIcon.setText(isFav ? "❤️" : "🤍");
+        heartIcon.setTextSize(32);
+        heartIcon.setGravity(android.view.Gravity.CENTER);
+        heartCircle.addView(heartIcon);
+        heartCircle.setOnClickListener(v -> {
+            if (!SupabaseManager.isSignedIn()) {
+                Toast.makeText(MainActivity.this, "Please log in or sign up first.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (favoriteProductIds.contains((long) product.getId())) {
                 SupabaseManager.removeFavorite(product.getId(), new SupabaseManager.AuthCallback() {
                     @Override
                     public void onSuccess(String msg) {
                         runOnUiThread(() -> {
                             favoriteProductIds.remove((long) product.getId());
-                            favButton.setImageResource(android.R.drawable.btn_star_big_off);
-                            favButton.setColorFilter(Color.GRAY);
-                            favButton.setContentDescription("Add to favorites");
+                            heartIcon.setText("🤍");
                         });
                     }
                     @Override
@@ -623,9 +683,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(String msg) {
                         runOnUiThread(() -> {
                             favoriteProductIds.add((long) product.getId());
-                            favButton.setImageResource(android.R.drawable.btn_star_big_on);
-                            favButton.setColorFilter(Color.RED);
-                            favButton.setContentDescription("Remove from favorites");
+                            heartIcon.setText("❤️");
                         });
                     }
                     @Override
@@ -636,65 +694,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Product title
-        TextView titleView = new TextView(this);
-        titleView.setText(product.getTitle());
-        titleView.setTextSize(14);
-        titleView.setTextColor(getResources().getColor(android.R.color.black));
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        titleView.setMaxLines(2);
-        titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        
-        // Product description
-        TextView descView = new TextView(this);
-        descView.setText("Original fresh " + product.getTitle().toLowerCase());
-        descView.setTextSize(10);
-        descView.setTextColor(getResources().getColor(android.R.color.darker_gray));
-        descView.setMaxLines(1);
-        descView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        
-        // Price
-        TextView priceView = new TextView(this);
-        priceView.setText("$" + String.format("%.2f", product.getPrice()) + "/Kg");
-        priceView.setTextSize(12);
-        priceView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-        priceView.setTypeface(null, android.graphics.Typeface.BOLD);
-        priceView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        
-        // Add to Cart button
-        Button addToCartButton = new Button(this);
-        addToCartButton.setText("Add to Cart");
-        addToCartButton.setTextSize(14);
-        addToCartButton.setTypeface(null, android.graphics.Typeface.BOLD);
-        addToCartButton.setAllCaps(true);
-        addToCartButton.setTextColor(getResources().getColor(android.R.color.white));
-        addToCartButton.setBackgroundResource(R.drawable.button_green_rounded);
-        addToCartButton.setPadding(0, 32, 0, 32);
-        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT);
-        btnParams.setMargins(0, 24, 0, 0);
-        addToCartButton.setLayoutParams(btnParams);
-        addToCartButton.setOnClickListener(v -> {
-            addToCart(product);
-            Toast.makeText(this, "Added to cart: " + product.getTitle() + " (ID: " + product.getId() + ")", Toast.LENGTH_SHORT).show();
-        });
-        
         // Add all views to details container
         detailsContainer.addView(titleView);
         detailsContainer.addView(descView);
         detailsContainer.addView(priceView);
-        // Add favorite button above Add to Cart
-        detailsContainer.addView(favButton);
         detailsContainer.addView(addToCartButton);
-        
-        // Add to main card container
+
+        // Add image and details to card
         cardContainer.addView(imageContainer);
         cardContainer.addView(detailsContainer);
-        
-        return cardContainer;
+
+        // Add cardContainer and heartCircle to FrameLayout
+        cardFrame.addView(cardContainer);
+        cardFrame.addView(heartCircle);
+
+        return cardFrame;
     }
 
     private void addToCart(Product product) {
