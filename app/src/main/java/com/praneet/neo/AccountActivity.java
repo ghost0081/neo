@@ -25,6 +25,12 @@ public class AccountActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Hide action bar if it exists
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+        
         setContentView(R.layout.activity_account);
         
         initializeViews();
@@ -314,12 +320,14 @@ public class AccountActivity extends AppCompatActivity {
         userProfile.setVisibility(View.GONE);
         isLoginMode = true;
         toggleMode.setText("New User? Sign Up");
+        toggleMode.setVisibility(View.VISIBLE); // Show toggle on login form
     }
     
     private void showUserProfile() {
         loginForm.setVisibility(View.GONE);
         registerForm.setVisibility(View.GONE);
         userProfile.setVisibility(View.VISIBLE);
+        toggleMode.setVisibility(View.GONE); // Hide toggle after login
         
         // Show loading state
         profileName.setText("Loading profile...");
@@ -433,6 +441,7 @@ public class AccountActivity extends AppCompatActivity {
         userProfile.setVisibility(View.GONE);
         isLoginMode = false;
         toggleMode.setText("Already have an account? Sign In");
+        toggleMode.setVisibility(View.VISIBLE); // Show toggle on registration form
         
         // Clear the form for new registration
         clearRegistrationForm();

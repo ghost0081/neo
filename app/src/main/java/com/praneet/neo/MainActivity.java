@@ -36,11 +36,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Hide action bar if it exists
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+        
         setContentView(R.layout.activity_main);
         
         // Initialize managers
         SupabaseManager.initialize(this);
         ProductDatabaseManager.initialize(this);
+        CartManager.getInstance(this); // Initialize CartManager
         
         // Open cart page when cart button is clicked
         LinearLayout cartButton = findViewById(R.id.bottom_nav_cart);
@@ -87,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
         setupRepository();
         setupSearchFunctionality();
         setupViewAllButton();
+        setupUserProfileSection();
         loadProducts();
     }
 
@@ -94,6 +102,44 @@ public class MainActivity extends AppCompatActivity {
         searchInput = findViewById(R.id.search_input);
         categoryContainer = findViewById(R.id.category_container);
         productContainer = findViewById(R.id.product_container);
+    }
+    
+    private void setupUserProfileSection() {
+        LinearLayout userProfileSection = findViewById(R.id.user_profile_section);
+        TextView welcomeText = findViewById(R.id.welcome_text);
+        TextView userNameText = findViewById(R.id.user_name_text);
+        
+        // Set click listener to go to account page
+        userProfileSection.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AccountActivity.class);
+            startActivity(intent);
+        });
+        
+        // Check login status and update UI
+        updateUserProfileUI();
+    }
+    
+    private void updateUserProfileUI() {
+        TextView welcomeText = findViewById(R.id.welcome_text);
+        TextView userNameText = findViewById(R.id.user_name_text);
+        
+        // Check if user is logged in
+        if (SupabaseManager.isSignedIn()) {
+            // User is logged in
+            welcomeText.setText("Welcome");
+            String userName = SupabaseManager.getStoredUserName();
+            if (userName != null && !userName.isEmpty()) {
+                userNameText.setText(userName);
+            } else {
+                userNameText.setText("User");
+            }
+            userNameText.setTextColor(getResources().getColor(android.R.color.black));
+        } else {
+            // User is not logged in
+            welcomeText.setText("Welcome");
+            userNameText.setText("Login / Signup");
+            userNameText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }
     }
 
     private void setupRepository() {
@@ -562,41 +608,30 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
         
-        // Add to cart button (circular)
-        LinearLayout buttonContainer = new LinearLayout(this);
-        buttonContainer.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
-        buttonContainer.setGravity(android.view.Gravity.END);
-        buttonContainer.setPadding(0, 8, 0, 0);
-        
-        LinearLayout cartButton = new LinearLayout(this);
-        cartButton.setLayoutParams(new LinearLayout.LayoutParams(40, 40));
-        cartButton.setBackgroundColor(getResources().getColor(android.R.color.black));
-        cartButton.setGravity(android.view.Gravity.CENTER);
-        cartButton.setElevation(2f);
-        
-        TextView cartIcon = new TextView(this);
-        cartIcon.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        cartIcon.setText("🛒");
-        cartIcon.setTextSize(16);
-        cartIcon.setTextColor(getResources().getColor(android.R.color.white));
-        
-        cartButton.addView(cartIcon);
-        cartButton.setOnClickListener(v -> {
-            addToCart(product.getTitle());
+        // Add to Cart button
+        Button addToCartButton = new Button(this);
+        addToCartButton.setText("Add to Cart");
+        addToCartButton.setTextSize(14);
+        addToCartButton.setTypeface(null, android.graphics.Typeface.BOLD);
+        addToCartButton.setAllCaps(true);
+        addToCartButton.setTextColor(getResources().getColor(android.R.color.white));
+        addToCartButton.setBackgroundResource(R.drawable.button_green_rounded);
+        addToCartButton.setPadding(0, 32, 0, 32);
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+        btnParams.setMargins(0, 24, 0, 0);
+        addToCartButton.setLayoutParams(btnParams);
+        addToCartButton.setOnClickListener(v -> {
+            addToCart(product);
+            Toast.makeText(this, "Added to cart: " + product.getTitle() + " (ID: " + product.getId() + ")", Toast.LENGTH_SHORT).show();
         });
-        
-        buttonContainer.addView(cartButton);
         
         // Add all views to details container
         detailsContainer.addView(titleView);
         detailsContainer.addView(descView);
         detailsContainer.addView(priceView);
-        detailsContainer.addView(buttonContainer);
+        detailsContainer.addView(addToCartButton);
         
         // Add to main card container
         cardContainer.addView(imageContainer);
@@ -605,8 +640,62 @@ public class MainActivity extends AppCompatActivity {
         return cardContainer;
     }
 
-    private void addToCart(String productName) {
-        Toast.makeText(this, "🛒 " + productName + " added to cart!", Toast.LENGTH_SHORT).show();
+    private void addToCart(Product product) {
+        addToCart(product, 1);
+    }
+    
+    private void addToCart(Product product, int quantity) {
+        CartManager cartManager = CartManager.getInstance(this);
+        cartManager.addToCart(product, quantity);
+        
+        String message = quantity > 1 ? 
+            "🛒 " + quantity + "x " + product.getTitle() + " added to cart!" :
+            "🛒 " + product.getTitle() + " added to cart!";
+        
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        
+        // Update cart badge if you have one
+        updateCartBadge();
+    }
+    
+    private void showQuantityDialog(Product product) {
+        // Create a simple dialog for quantity selection
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Add to Cart");
+        builder.setMessage("How many " + product.getTitle() + " would you like to add?");
+        
+        // Create input field for quantity
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        input.setText("1");
+        input.setSelection(input.getText().length());
+        builder.setView(input);
+        
+        builder.setPositiveButton("Add", (dialog, which) -> {
+            try {
+                int quantity = Integer.parseInt(input.getText().toString());
+                if (quantity > 0 && quantity <= 100) {
+                    addToCart(product, quantity);
+                } else {
+                    Toast.makeText(this, "Please enter a valid quantity (1-100)", Toast.LENGTH_SHORT).show();
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        
+        builder.show();
+    }
+    
+    private void updateCartBadge() {
+        CartManager cartManager = CartManager.getInstance(this);
+        int itemCount = cartManager.getCartItemCount();
+        
+        // You can add a badge to the cart button here if needed
+        // For now, we'll just log the count
+        System.out.println("Cart now has " + itemCount + " items");
     }
 
     private void openProductDetail(Product product) {
@@ -615,6 +704,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Update user profile UI when returning from account page
+        updateUserProfileUI();
+    }
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();

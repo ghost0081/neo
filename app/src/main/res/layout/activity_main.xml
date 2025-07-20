@@ -16,11 +16,16 @@
 
         <!-- User Profile Row -->
         <LinearLayout
+            android:id="@+id/user_profile_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="@dimen/spacing_medium">
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp">
 
             <!-- Profile Picture -->
             <LinearLayout
@@ -45,6 +50,7 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/welcome_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Welcome"
@@ -52,12 +58,13 @@
                     android:textColor="#666666" />
 
                 <TextView
+                    android:id="@+id/user_name_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tariqul Islam"
+                    android:text="Login / Signup"
                     android:textSize="@dimen/body_text_size"
                     android:textStyle="bold"
-                    android:textColor="#1A1A1A" />
+                    android:textColor="#4CAF50" />
             </LinearLayout>
 
             <!-- Notification Bell -->
