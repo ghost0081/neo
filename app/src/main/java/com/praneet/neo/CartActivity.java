@@ -53,6 +53,30 @@ public class CartActivity extends AppCompatActivity {
             }
         });
 
+        Button proceedToPayment = findViewById(R.id.proceed_to_payment_button);
+        proceedToPayment.setOnClickListener(v -> {
+            List<CartItem> cartItems = cartManager.getCartItems();
+            if (cartItems.isEmpty()) {
+                Toast.makeText(this, "Cart is empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            double total = cartManager.getCartTotal();
+            SupabaseManager.placeOrder(cartItems, total, new SupabaseManager.AuthCallback() {
+                @Override
+                public void onSuccess(String msg) {
+                    runOnUiThread(() -> {
+                        cartManager.clearCart();
+                        loadCartItems();
+                        Toast.makeText(CartActivity.this, "Order placed successfully!", Toast.LENGTH_LONG).show();
+                    });
+                }
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> Toast.makeText(CartActivity.this, "Order failed: " + error, Toast.LENGTH_LONG).show());
+                }
+            });
+        });
+
         // Load and display cart items
         loadCartItems();
         

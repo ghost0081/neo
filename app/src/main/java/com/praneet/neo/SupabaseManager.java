@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import okhttp3.HttpUrl;
 import java.util.ArrayList;
 import java.util.List;
+import com.praneet.neo.model.CartItem;
 
 public class SupabaseManager {
     private static final String TAG = "SupabaseManager";
@@ -714,6 +715,152 @@ public class SupabaseManager {
     // Callback for getting favorites
     public interface FavoritesCallback {
         void onSuccess(List<Long> productIds);
+        void onError(String error);
+    }
+
+    // Place an order for the current user
+    public static void placeOrder(List<CartItem> cartItems, double totalPrice, AuthCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                // 1. Create order
+                JSONObject orderJson = new JSONObject();
+                orderJson.put("user_id", userId);
+                orderJson.put("total_price", totalPrice);
+                // status and created_at are default
+
+                RequestBody orderBody = RequestBody.create(
+                    MediaType.parse("application/json"), orderJson.toString());
+
+                Request orderRequest = new Request.Builder()
+                    .url(SUPABASE_URL + "/rest/v1/orders?select=id")
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Prefer", "return=representation")
+                    .post(orderBody)
+                    .build();
+
+                try (Response orderResponse = httpClient.newCall(orderRequest).execute()) {
+                    if (!orderResponse.isSuccessful()) {
+                        callback.onError("Failed to create order: " + orderResponse.code());
+                        return;
+                    }
+                    String orderRespBody = orderResponse.body() != null ? orderResponse.body().string() : "";
+                    JSONArray arr = new JSONArray(orderRespBody);
+                    if (arr.length() == 0) {
+                        callback.onError("Order creation failed: no ID returned");
+                        return;
+                    }
+                    long orderId = arr.getJSONObject(0).getLong("id");
+
+                    // 2. Add order_items
+                    JSONArray itemsArray = new JSONArray();
+                    for (CartItem item : cartItems) {
+                        JSONObject itemJson = new JSONObject();
+                        itemJson.put("order_id", orderId);
+                        itemJson.put("product_id", item.getProduct().getId());
+                        itemJson.put("quantity", item.getQuantity());
+                        itemJson.put("price_at_purchase", item.getProduct().getPrice());
+                        itemsArray.put(itemJson);
+                    }
+                    RequestBody itemsBody = RequestBody.create(
+                        MediaType.parse("application/json"), itemsArray.toString());
+                    Request itemsRequest = new Request.Builder()
+                        .url(SUPABASE_URL + "/rest/v1/order_items")
+                        .addHeader("apikey", SUPABASE_ANON_KEY)
+                        .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                        .addHeader("Content-Type", "application/json")
+                        .post(itemsBody)
+                        .build();
+                    try (Response itemsResponse = httpClient.newCall(itemsRequest).execute()) {
+                        if (!itemsResponse.isSuccessful()) {
+                            callback.onError("Failed to add order items: " + itemsResponse.code());
+                            return;
+                        }
+                        callback.onSuccess("Order placed successfully");
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Get all orders for the current user
+    public static void getOrdersForCurrentUser(OrdersCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                HttpUrl url = HttpUrl.parse(SUPABASE_URL + "/rest/v1/orders")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .addQueryParameter("order", "created_at.desc")
+                    .build();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        callback.onSuccess(new JSONArray(responseBody));
+                    } else {
+                        callback.onError("Failed to fetch orders: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Get all items for a given order
+    public static void getOrderItems(long orderId, OrderItemsCallback callback) {
+        new Thread(() -> {
+            try {
+                HttpUrl url = HttpUrl.parse(SUPABASE_URL + "/rest/v1/order_items")
+                    .newBuilder()
+                    .addQueryParameter("order_id", "eq." + orderId)
+                    .build();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        callback.onSuccess(new JSONArray(responseBody));
+                    } else {
+                        callback.onError("Failed to fetch order items: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Callback for getting orders
+    public interface OrdersCallback {
+        void onSuccess(JSONArray orders);
+        void onError(String error);
+    }
+    // Callback for getting order items
+    public interface OrderItemsCallback {
+        void onSuccess(JSONArray orderItems);
         void onError(String error);
     }
 } 

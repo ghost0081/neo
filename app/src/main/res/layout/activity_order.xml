@@ -1,24 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:background="#F8F9FA">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/orders_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="📋"
-        android:textSize="64sp"
-        android:gravity="center" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Your Orders"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#222222"
-        android:layout_marginTop="16dp" />
-</LinearLayout> 
+        android:orientation="vertical"
+        android:padding="32dp"/>
+</ScrollView> 
