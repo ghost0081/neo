@@ -29,26 +29,46 @@ public class OrderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_order);
 
         ordersContainer = findViewById(R.id.orders_container);
-        loadOrders();
+        SupabaseManager.fetchAndCacheAdminStatus(isAdmin -> runOnUiThread(this::loadOrders));
     }
 
     private void loadOrders() {
-        SupabaseManager.getOrdersForCurrentUser(new SupabaseManager.OrdersCallback() {
-            @Override
-            public void onSuccess(JSONArray orders) {
-                runOnUiThread(() -> {
-                    if (orders.length() == 0) {
-                        showEmptyMessage();
-                        return;
-                    }
-                    showOrders(orders);
-                });
-            }
-            @Override
-            public void onError(String error) {
-                runOnUiThread(() -> showEmptyMessage());
-            }
-        });
+        android.util.Log.d("AdminCheck", "isCurrentUserAdmin: " + SupabaseManager.isCurrentUserAdmin());
+        if (SupabaseManager.isCurrentUserAdmin()) {
+            SupabaseManager.getAllOrders(new SupabaseManager.OrdersCallback() {
+                @Override
+                public void onSuccess(JSONArray orders) {
+                    runOnUiThread(() -> {
+                        if (orders.length() == 0) {
+                            showEmptyMessage();
+                            return;
+                        }
+                        showOrders(orders);
+                    });
+                }
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> showEmptyMessage());
+                }
+            });
+        } else {
+            SupabaseManager.getOrdersForCurrentUser(new SupabaseManager.OrdersCallback() {
+                @Override
+                public void onSuccess(JSONArray orders) {
+                    runOnUiThread(() -> {
+                        if (orders.length() == 0) {
+                            showEmptyMessage();
+                            return;
+                        }
+                        showOrders(orders);
+                    });
+                }
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> showEmptyMessage());
+                }
+            });
+        }
     }
 
     private void showOrders(JSONArray orders) {

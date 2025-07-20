@@ -16,7 +16,7 @@ import com.praneet.neo.model.CartItem;
 public class SupabaseManager {
     private static final String TAG = "SupabaseManager";
     private static final String SUPABASE_URL = "https://xqofxqnwohkpbdtpotya.supabase.co";
-    private static final String SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxb2Z4cW53b2hrcGJkdHBvdHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NDU0OTEsImV4cCI6MjA2ODUyMTQ5MX0.KZIo2Zuq3cxBZOliRrerPCQP7OeoRrehbXMxR4o6gIk";
+    public static final String SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxb2Z4cW53b2hrcGJkdHBvdHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NDU0OTEsImV4cCI6MjA2ODUyMTQ5MX0.KZIo2Zuq3cxBZOliRrerPCQP7OeoRrehbXMxR4o6gIk";
     
     private static OkHttpClient httpClient;
     private static Context context;
@@ -119,8 +119,7 @@ public class SupabaseManager {
                             .putString("user_email", email)
                             .apply();
                         
-                        // Save profile data with the access token
-                        saveUserProfileWithToken(accessToken, name, phone, address, callback);
+                        callback.onSuccess("Account created successfully! You can now sign in.");
                     } else {
                         callback.onSuccess("Account created successfully! You can now sign in.");
                     }
@@ -171,8 +170,7 @@ public class SupabaseManager {
                                 .putString("user_email", email)
                                 .apply();
                             
-                            // Save profile data with the access token
-                            saveUserProfileWithToken(accessToken, name, phone, address, callback);
+                            callback.onSuccess("Signed in successfully!");
                         } else {
                             callback.onSuccess("Signed in successfully!");
                         }
@@ -311,7 +309,7 @@ public class SupabaseManager {
             profileData.put("name", name);
             profileData.put("phone", phone);
             profileData.put("address", address);
-            
+            Log.d("ProfileCreate", "POST body: " + profileData.toString());
             RequestBody body = RequestBody.create(
                 MediaType.parse("application/json"), 
                 profileData.toString()
@@ -328,10 +326,11 @@ public class SupabaseManager {
             
             try (Response response = httpClient.newCall(request).execute()) {
                 if (response.isSuccessful()) {
+                    Log.d("ProfileCreate", "Profile created successfully! Name: " + name);
                     callback.onSuccess("Account created and profile saved successfully!");
                 } else {
                     String responseBody = response.body() != null ? response.body().string() : "";
-                    Log.e(TAG, "Profile save error: " + response.code() + " - " + responseBody);
+                    Log.e("ProfileCreate", "Profile create failed: " + response.code() + " - " + responseBody);
                     callback.onSuccess("Account created successfully! Profile will be saved when you sign in.");
                 }
             }
@@ -361,10 +360,15 @@ public class SupabaseManager {
                 }
                 
                 JSONObject profileData = new JSONObject();
-                profileData.put("id", userId);
                 profileData.put("name", name);
                 profileData.put("phone", phone);
                 profileData.put("address", address);
+                Log.d("ProfileUpdate", "PATCH body: " + profileData.toString());
+                if (name.isEmpty() && phone.isEmpty() && address.isEmpty()) {
+                    Log.e("ProfileUpdate", "Attempted to PATCH with all empty fields. Aborting.");
+                    callback.onError("Cannot update profile with all empty fields.");
+                    return;
+                }
                 
                 RequestBody body = RequestBody.create(
                     MediaType.parse("application/json"), 
@@ -382,10 +386,11 @@ public class SupabaseManager {
                 
                 try (Response response = httpClient.newCall(request).execute()) {
                     if (response.isSuccessful()) {
+                        Log.d("ProfileUpdate", "Profile updated successfully! Name: " + name);
                         callback.onSuccess("Profile updated successfully!");
                     } else {
                         String responseBody = response.body() != null ? response.body().string() : "";
-                        Log.e(TAG, "Profile update error: " + response.code() + " - " + responseBody);
+                        Log.e("ProfileUpdate", "Update failed: " + response.code() + " - " + responseBody);
                         callback.onError("Failed to update profile: " + response.code());
                     }
                 }
@@ -466,7 +471,7 @@ public class SupabaseManager {
                     prefs.edit().putString("user_id", userId).apply();
                 }
                 
-                Log.d(TAG, "Fetching profile for user ID: " + userId);
+                Log.d("ProfileFetch", "Fetching profile for user ID: " + userId);
                 
                 Request request = new Request.Builder()
                     .url(SUPABASE_URL + "/rest/v1/profiles?select=*&id=eq." + userId)
@@ -479,7 +484,7 @@ public class SupabaseManager {
                 try (Response response = httpClient.newCall(request).execute()) {
                     if (response.isSuccessful()) {
                         String responseBody = response.body() != null ? response.body().string() : "";
-                        Log.d(TAG, "Profile response: " + responseBody);
+                        Log.d("ProfileFetch", "Profile response: " + responseBody);
                         
                         JSONArray profiles = new JSONArray(responseBody);
                         
@@ -517,7 +522,7 @@ public class SupabaseManager {
             profileData.put("name", "User");
             profileData.put("phone", "");
             profileData.put("address", "");
-            
+            Log.d("ProfileCreate", "POST body (basic): " + profileData.toString());
             RequestBody body = RequestBody.create(
                 MediaType.parse("application/json"), 
                 profileData.toString()
@@ -862,5 +867,424 @@ public class SupabaseManager {
     public interface OrderItemsCallback {
         void onSuccess(JSONArray orderItems);
         void onError(String error);
+    }
+
+    // Cart callbacks for backend-only cart operations
+    public interface CartCallback {
+        void onSuccess();
+        void onError(String error);
+    }
+    public interface CartItemsCallback {
+        void onSuccess(List<com.praneet.neo.model.CartItem> cartItems);
+        void onError(String error);
+    }
+
+    // --- CART BACKEND METHODS (REAL IMPLEMENTATION) ---
+    public static void addToCart(com.praneet.neo.model.Product product, int quantity, CartCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                // Upsert: if item exists, update quantity; else insert
+                // Try to fetch existing cart item
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/cart")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .addQueryParameter("product_id", "eq." + product.getId())
+                    .build();
+                Request getReq = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response getResp = httpClient.newCall(getReq).execute()) {
+                    if (getResp.isSuccessful()) {
+                        String respBody = getResp.body() != null ? getResp.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(respBody);
+                        if (arr.length() > 0) {
+                            // Exists: update quantity
+                            org.json.JSONObject obj = arr.getJSONObject(0);
+                            int existingQty = obj.getInt("quantity");
+                            int newQty = existingQty + quantity;
+                            int cartId = obj.getInt("id");
+                            org.json.JSONObject patch = new org.json.JSONObject();
+                            patch.put("quantity", newQty);
+                            RequestBody patchBody = RequestBody.create(
+                                MediaType.parse("application/json"), patch.toString());
+                            Request patchReq = new Request.Builder()
+                                .url(SUPABASE_URL + "/rest/v1/cart?id=eq." + cartId)
+                                .addHeader("apikey", SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                                .addHeader("Content-Type", "application/json")
+                                .patch(patchBody)
+                                .build();
+                            try (Response patchResp = httpClient.newCall(patchReq).execute()) {
+                                if (patchResp.isSuccessful()) {
+                                    callback.onSuccess();
+                                } else {
+                                    callback.onError("Failed to update cart: " + patchResp.code());
+                                }
+                            }
+                        } else {
+                            // Not exists: insert new
+                            org.json.JSONObject cartItem = new org.json.JSONObject();
+                            cartItem.put("user_id", userId);
+                            cartItem.put("product_id", product.getId());
+                            cartItem.put("quantity", quantity);
+                            RequestBody body = RequestBody.create(
+                                MediaType.parse("application/json"), cartItem.toString());
+                            Request postReq = new Request.Builder()
+                                .url(SUPABASE_URL + "/rest/v1/cart")
+                                .addHeader("apikey", SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                                .addHeader("Content-Type", "application/json")
+                                .addHeader("Prefer", "return=representation")
+                                .post(body)
+                                .build();
+                            try (Response postResp = httpClient.newCall(postReq).execute()) {
+                                if (postResp.isSuccessful()) {
+                                    callback.onSuccess();
+                                } else {
+                                    callback.onError("Failed to add to cart: " + postResp.code());
+                                }
+                            }
+                        }
+                    } else {
+                        callback.onError("Failed to check cart: " + getResp.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void getCartItems(CartItemsCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/cart")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .build();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(responseBody);
+                        List<Integer> productIds = new java.util.ArrayList<>();
+                        List<Integer> quantities = new java.util.ArrayList<>();
+                        for (int i = 0; i < arr.length(); i++) {
+                            org.json.JSONObject obj = arr.getJSONObject(i);
+                            int productId = obj.getInt("product_id");
+                            int quantity = obj.getInt("quantity");
+                            productIds.add(productId);
+                            quantities.add(quantity);
+                        }
+                        if (productIds.isEmpty()) {
+                            callback.onSuccess(new java.util.ArrayList<>());
+                            return;
+                        }
+                        fetchProductsForCart(productIds, quantities, new java.util.ArrayList<>(), 0, callback);
+                    } else {
+                        callback.onError("Failed to fetch cart: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Helper method to fetch products for cart items recursively
+    private static void fetchProductsForCart(List<Integer> productIds, List<Integer> quantities, List<com.praneet.neo.model.CartItem> cartItems, int index, CartItemsCallback callback) {
+        if (index >= productIds.size()) {
+            callback.onSuccess(cartItems);
+            return;
+        }
+        int productId = productIds.get(index);
+        int quantity = quantities.get(index);
+        ProductDatabaseManager.getProductById(productId, new ProductDatabaseManager.ProductCallback() {
+            @Override
+            public void onSuccess(List<com.praneet.neo.model.Product> products) {
+                if (!products.isEmpty()) {
+                    cartItems.add(new com.praneet.neo.model.CartItem(products.get(0), quantity));
+                }
+                fetchProductsForCart(productIds, quantities, cartItems, index + 1, callback);
+            }
+            @Override
+            public void onError(String error) {
+                // Skip this product and continue
+                fetchProductsForCart(productIds, quantities, cartItems, index + 1, callback);
+            }
+        });
+    }
+
+    public static void updateCartQuantity(int productId, int quantity, CartCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                // Find cart item by user_id and product_id
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/cart")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .addQueryParameter("product_id", "eq." + productId)
+                    .build();
+                Request getReq = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response getResp = httpClient.newCall(getReq).execute()) {
+                    if (getResp.isSuccessful()) {
+                        String respBody = getResp.body() != null ? getResp.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(respBody);
+                        if (arr.length() > 0) {
+                            org.json.JSONObject obj = arr.getJSONObject(0);
+                            int cartId = obj.getInt("id");
+                            if (quantity <= 0) {
+                                // Remove item
+                                removeFromCart(productId, callback);
+                                return;
+                            }
+                            org.json.JSONObject patch = new org.json.JSONObject();
+                            patch.put("quantity", quantity);
+                            RequestBody patchBody = RequestBody.create(
+                                MediaType.parse("application/json"), patch.toString());
+                            Request patchReq = new Request.Builder()
+                                .url(SUPABASE_URL + "/rest/v1/cart?id=eq." + cartId)
+                                .addHeader("apikey", SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                                .addHeader("Content-Type", "application/json")
+                                .patch(patchBody)
+                                .build();
+                            try (Response patchResp = httpClient.newCall(patchReq).execute()) {
+                                if (patchResp.isSuccessful()) {
+                                    callback.onSuccess();
+                                } else {
+                                    callback.onError("Failed to update cart: " + patchResp.code());
+                                }
+                            }
+                        } else {
+                            callback.onError("Cart item not found");
+                        }
+                    } else {
+                        callback.onError("Failed to check cart: " + getResp.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void removeFromCart(int productId, CartCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                // Find cart item by user_id and product_id
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/cart")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .addQueryParameter("product_id", "eq." + productId)
+                    .build();
+                Request getReq = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response getResp = httpClient.newCall(getReq).execute()) {
+                    if (getResp.isSuccessful()) {
+                        String respBody = getResp.body() != null ? getResp.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(respBody);
+                        if (arr.length() > 0) {
+                            org.json.JSONObject obj = arr.getJSONObject(0);
+                            int cartId = obj.getInt("id");
+                            Request delReq = new Request.Builder()
+                                .url(SUPABASE_URL + "/rest/v1/cart?id=eq." + cartId)
+                                .addHeader("apikey", SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                                .delete()
+                                .build();
+                            try (Response delResp = httpClient.newCall(delReq).execute()) {
+                                if (delResp.isSuccessful()) {
+                                    callback.onSuccess();
+                                } else {
+                                    callback.onError("Failed to remove from cart: " + delResp.code());
+                                }
+                            }
+                        } else {
+                            callback.onError("Cart item not found");
+                        }
+                    } else {
+                        callback.onError("Failed to check cart: " + getResp.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void clearCart(CartCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                // Get all cart items for user
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/cart")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .build();
+                Request getReq = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response getResp = httpClient.newCall(getReq).execute()) {
+                    if (getResp.isSuccessful()) {
+                        String respBody = getResp.body() != null ? getResp.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(respBody);
+                        boolean allSuccess = true;
+                        for (int i = 0; i < arr.length(); i++) {
+                            org.json.JSONObject obj = arr.getJSONObject(i);
+                            int cartId = obj.getInt("id");
+                            Request delReq = new Request.Builder()
+                                .url(SUPABASE_URL + "/rest/v1/cart?id=eq." + cartId)
+                                .addHeader("apikey", SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                                .delete()
+                                .build();
+                            try (Response delResp = httpClient.newCall(delReq).execute()) {
+                                if (!delResp.isSuccessful()) {
+                                    allSuccess = false;
+                                }
+                            }
+                        }
+                        if (allSuccess) {
+                            callback.onSuccess();
+                        } else {
+                            callback.onError("Failed to clear some cart items");
+                        }
+                    } else {
+                        callback.onError("Failed to fetch cart: " + getResp.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Fetch all orders (for admin)
+    public static void getAllOrders(OrdersCallback callback) {
+        android.util.Log.d("AdminCheck", "Fetching all orders for admin");
+        new Thread(() -> {
+            try {
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/orders")
+                    .newBuilder()
+                    .addQueryParameter("order", "created_at.desc")
+                    .build();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        callback.onSuccess(new org.json.JSONArray(responseBody));
+                    } else {
+                        callback.onError("Failed to fetch orders: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private static Boolean cachedIsAdmin = null;
+
+    public interface AdminStatusCallback {
+        void onResult(boolean isAdmin);
+    }
+
+    public static void fetchAndCacheAdminStatus(AdminStatusCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                android.util.Log.d("AdminCheck", "Fetching profile for userId: " + userId);
+                if (userId == null || userId.isEmpty()) {
+                    cachedIsAdmin = false;
+                    callback.onResult(false);
+                    return;
+                }
+                okhttp3.HttpUrl url = okhttp3.HttpUrl.parse(SUPABASE_URL + "/rest/v1/profiles")
+                    .newBuilder()
+                    .addQueryParameter("id", "eq." + userId)
+                    .build();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        org.json.JSONArray arr = new org.json.JSONArray(responseBody);
+                        if (arr.length() > 0) {
+                            org.json.JSONObject profile = arr.getJSONObject(0);
+                            boolean isAdmin = profile.optBoolean("is_admin", false);
+                            android.util.Log.d("AdminCheck", "Profile: " + profile.toString() + ", is_admin: " + isAdmin);
+                            cachedIsAdmin = isAdmin;
+                            callback.onResult(isAdmin);
+                            return;
+                        } else {
+                            android.util.Log.d("AdminCheck", "No profile found for userId: " + userId);
+                        }
+                    } else {
+                        android.util.Log.d("AdminCheck", "Profile fetch failed: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.e("AdminCheck", "Exception: " + e.getMessage());
+            }
+            cachedIsAdmin = false;
+            callback.onResult(false);
+        }).start();
+    }
+
+    public static boolean isCurrentUserAdmin() {
+        return cachedIsAdmin != null && cachedIsAdmin;
     }
 } 

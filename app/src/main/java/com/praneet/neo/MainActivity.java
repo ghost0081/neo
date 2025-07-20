@@ -26,6 +26,7 @@ import com.praneet.neo.ProductDatabaseManager;
 import android.widget.ImageButton;
 import android.graphics.Color;
 import android.widget.FrameLayout;
+import com.praneet.neo.model.CartItem;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -52,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize managers
         SupabaseManager.initialize(this);
         ProductDatabaseManager.initialize(this);
-        CartManager.getInstance(this); // Initialize CartManager
         
         // Open cart page when cart button is clicked
         LinearLayout cartButton = findViewById(R.id.bottom_nav_cart);
@@ -129,23 +129,23 @@ public class MainActivity extends AppCompatActivity {
     private void updateUserProfileUI() {
         TextView welcomeText = findViewById(R.id.welcome_text);
         TextView userNameText = findViewById(R.id.user_name_text);
-        
         // Check if user is logged in
         if (SupabaseManager.isSignedIn()) {
-            // User is logged in
             welcomeText.setText("Welcome");
             String userName = SupabaseManager.getStoredUserName();
             if (userName != null && !userName.isEmpty()) {
                 userNameText.setText(userName);
+                android.util.Log.d("HomeUserName", "Setting home page user name: " + userName);
             } else {
-                userNameText.setText("User");
+                userNameText.setText("");
+                android.util.Log.d("HomeUserName", "Setting home page user name: (empty)");
             }
             userNameText.setTextColor(getResources().getColor(android.R.color.black));
         } else {
-            // User is not logged in
             welcomeText.setText("Welcome");
             userNameText.setText("Login / Signup");
             userNameText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            android.util.Log.d("HomeUserName", "Setting home page user name: Login / Signup");
         }
     }
 
@@ -638,8 +638,18 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please log in or sign up first.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            addToCart(product);
-            Toast.makeText(this, "Added to cart: " + product.getTitle() + " (ID: " + product.getId() + ")", Toast.LENGTH_SHORT).show();
+            SupabaseManager.addToCart(product, 1, new SupabaseManager.CartCallback() {
+                @Override
+                public void onSuccess() {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Added to cart: " + product.getTitle() + " (ID: " + product.getId() + ")", Toast.LENGTH_SHORT).show();
+                    });
+                }
+                @Override
+                public void onError(String err) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to add to cart", Toast.LENGTH_SHORT).show());
+                }
+            });
         });
 
         // Favorite (heart) button (top-right, overlay)
@@ -716,17 +726,23 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void addToCart(Product product, int quantity) {
-        CartManager cartManager = CartManager.getInstance(this);
-        cartManager.addToCart(product, quantity);
-        
-        String message = quantity > 1 ? 
-            "🛒 " + quantity + "x " + product.getTitle() + " added to cart!" :
-            "🛒 " + product.getTitle() + " added to cart!";
-        
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        
-        // Update cart badge if you have one
-        updateCartBadge();
+        SupabaseManager.addToCart(product, quantity, new SupabaseManager.CartCallback() {
+            @Override
+            public void onSuccess() {
+                runOnUiThread(() -> {
+                    String message = quantity > 1 ? 
+                        "🛒 " + quantity + "x " + product.getTitle() + " added to cart!" :
+                        "🛒 " + product.getTitle() + " added to cart!";
+                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    // Update cart badge if you have one
+                    updateCartBadge();
+                });
+            }
+            @Override
+            public void onError(String err) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to add to cart", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
     
     private void showQuantityDialog(Product product) {
@@ -761,12 +777,22 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void updateCartBadge() {
-        CartManager cartManager = CartManager.getInstance(this);
-        int itemCount = cartManager.getCartItemCount();
-        
-        // You can add a badge to the cart button here if needed
-        // For now, we'll just log the count
-        System.out.println("Cart now has " + itemCount + " items");
+        SupabaseManager.getCartItems(new SupabaseManager.CartItemsCallback() {
+            @Override
+            public void onSuccess(List<CartItem> cartItems) {
+                runOnUiThread(() -> {
+                    // You can add a badge to the cart button here if needed
+                    // For now, we'll just log the count
+                    System.out.println("Cart now has " + cartItems.size() + " items");
+                });
+            }
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    System.out.println("Error getting cart items: " + error);
+                });
+            }
+        });
     }
 
     private void openProductDetail(Product product) {

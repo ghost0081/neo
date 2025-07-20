@@ -178,6 +178,7 @@ public class ProductDatabaseManager {
             try {
                 // Check if initialized
                 if (httpClient == null) {
+                    Log.e("ProductFetch", "ProductDatabaseManager not initialized. Call initialize() first.");
                     callback.onError("ProductDatabaseManager not initialized. Call initialize() first.");
                     return;
                 }
@@ -187,7 +188,7 @@ public class ProductDatabaseManager {
                     accessToken = "";
                 }
                 
-                Log.d(TAG, "Fetching products from Supabase...");
+                Log.d("ProductFetch", "Fetching products from Supabase...");
                 
                 Request.Builder requestBuilder = new Request.Builder()
                     .url(SUPABASE_URL + "/rest/v1/products?select=*")
@@ -204,39 +205,23 @@ public class ProductDatabaseManager {
                 try (Response response = httpClient.newCall(request).execute()) {
                     if (response.isSuccessful()) {
                         String responseBody = response.body() != null ? response.body().string() : "";
-                        Log.d(TAG, "Supabase response received, length: " + responseBody.length());
-                        
                         JSONArray productsArray = new JSONArray(responseBody);
-                        Log.d(TAG, "Found " + productsArray.length() + " products in database");
-                        
-                        List<Product> products = new ArrayList<>();
-                        for (int i = 0; i < productsArray.length(); i++) {
-                            try {
-                                JSONObject productJson = productsArray.getJSONObject(i);
-                                Product product = gson.fromJson(productJson.toString(), Product.class);
-                                products.add(product);
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error parsing product from database at index " + i + ": " + e.getMessage());
-                                // Continue with next product
-                            }
-                        }
-                        
-                        Log.d(TAG, "Successfully parsed " + products.size() + " products from database");
+                        List<Product> products = gson.fromJson(productsArray.toString(), new TypeToken<List<Product>>(){}.getType());
                         callback.onSuccess(products);
                     } else {
-                        String errorBody = response.body() != null ? response.body().string() : "";
-                        Log.e(TAG, "Supabase request failed: " + response.code() + " - " + errorBody);
-                        
-                        if (response.code() == 404) {
-                            callback.onError("Products table not found. Please run the SQL script in your Supabase dashboard first.");
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        if (response.code() == 401 && responseBody.contains("JWT expired")) {
+                            Log.e("ProductFetch", "JWT expired. User session needs to be refreshed or re-authenticated.");
+                            callback.onError("Session expired. Please log in again.");
                         } else {
-                            callback.onError("Failed to fetch products from database: " + response.code() + " - " + errorBody);
+                            Log.e("ProductFetch", "Fetch failed: " + response.code() + " - " + responseBody);
+                            callback.onError("Failed to fetch products: " + response.code() + " - " + responseBody);
                         }
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error fetching products from Supabase: " + e.getMessage());
-                callback.onError("Error fetching products: " + e.getMessage());
+                Log.e("ProductFetch", "Exception fetching products", e);
+                callback.onError("Failed to fetch products: " + e.getMessage());
             }
         }).start();
     }
@@ -450,6 +435,61 @@ public class ProductDatabaseManager {
             } catch (Exception e) {
                 Log.e(TAG, "Error deleting product: " + e.getMessage());
                 callback.onError("Error deleting product: " + e.getMessage());
+            }
+        }).start();
+    }
+    
+    public static void insertProduct(Product product, DatabaseCallback callback) {
+        new Thread(() -> {
+            try {
+                org.json.JSONObject productJson = new org.json.JSONObject();
+                // Do NOT include id for insert (let Supabase auto-generate it)
+                productJson.put("title", product.getTitle() != null ? product.getTitle() : "");
+                productJson.put("price", product.getPrice());
+                productJson.put("description", product.getDescription() != null ? product.getDescription() : "");
+                productJson.put("discount_percentage", product.getDiscountPercentage());
+                productJson.put("rating", product.getRating());
+                productJson.put("stock", product.getStock());
+                productJson.put("brand", product.getBrand() != null ? product.getBrand() : "");
+                productJson.put("category", product.getCategory() != null ? product.getCategory() : "");
+                productJson.put("thumbnail", product.getThumbnail() != null ? product.getThumbnail() : "");
+                // Handle images array safely
+                if (product.getImages() != null && !product.getImages().isEmpty()) {
+                    JSONArray imagesArray = new JSONArray();
+                    for (String image : product.getImages()) {
+                        if (image != null && !image.isEmpty()) {
+                            imagesArray.put(image);
+                        }
+                    }
+                    productJson.put("images", imagesArray);
+                } else {
+                    productJson.put("images", new JSONArray());
+                }
+
+                okhttp3.RequestBody body = okhttp3.RequestBody.create(
+                    okhttp3.MediaType.parse("application/json"),
+                    "[" + productJson.toString() + "]" // Supabase expects an array for bulk insert
+                );
+
+                okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(SUPABASE_URL + "/rest/v1/products")
+                    .addHeader("apikey", SupabaseManager.SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + SupabaseManager.getStoredAccessToken())
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Prefer", "return=minimal")
+                    .post(body)
+                    .build();
+
+                okhttp3.Response response = httpClient.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    callback.onSuccess("Product inserted");
+                } else {
+                    String responseBody = response.body() != null ? response.body().string() : "";
+                    android.util.Log.e("ProductInsert", "Insert failed: " + response.code() + " - " + responseBody);
+                    callback.onError("Insert failed: " + response.code() + " - " + responseBody);
+                }
+            } catch (Exception e) {
+                callback.onError("Insert failed: " + e.getMessage());
             }
         }).start();
     }

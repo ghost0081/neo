@@ -9,6 +9,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.HttpUrl;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.view.ViewGroup;
+import android.view.Gravity;
 
 public class AccountActivity extends AppCompatActivity {
     
@@ -19,6 +29,7 @@ public class AccountActivity extends AppCompatActivity {
     private Button loginButton, registerButton, logoutButton;
     private TextView toggleMode, loginStatus, registerStatus;
     private TextView profileName, profileEmail, profilePhone, profileAddress;
+    private LinearLayout adminSection;
     
     private boolean isLoginMode = true;
     
@@ -68,6 +79,14 @@ public class AccountActivity extends AppCompatActivity {
         
         // Toggle
         toggleMode = findViewById(R.id.toggle_mode);
+
+        // Admin section (added programmatically)
+        adminSection = new LinearLayout(this);
+        adminSection.setOrientation(LinearLayout.HORIZONTAL);
+        adminSection.setVisibility(View.GONE);
+        adminSection.setPadding(0, 32, 0, 0);
+        // Add to userProfile layout after profileAddress
+        userProfile.addView(adminSection);
     }
     
     private void setupClickListeners() {
@@ -295,7 +314,6 @@ public class AccountActivity extends AppCompatActivity {
                     Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
                     showLoginForm();
                     // Refresh cart for guest/next user
-                    CartManager.getInstance(AccountActivity.this).refreshCartForCurrentUser();
                 });
             }
             
@@ -331,7 +349,6 @@ public class AccountActivity extends AppCompatActivity {
         userProfile.setVisibility(View.VISIBLE);
         toggleMode.setVisibility(View.GONE); // Hide toggle after login
         // Refresh cart for the current user
-        CartManager.getInstance(this).refreshCartForCurrentUser();
         
         // Show loading state
         profileName.setText("Loading profile...");
@@ -357,57 +374,24 @@ public class AccountActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String name, String phone, String address) {
                 runOnUiThread(() -> {
-                    // If profile data is empty, use stored data
-                    String displayName = name;
-                    String displayPhone = phone;
-                    String displayAddress = address;
-                    
-                    if (name.isEmpty() || name.equals("User")) {
-                        displayName = storedName;
-                        displayPhone = storedPhone;
-                        displayAddress = storedAddress;
-                        
-                        // If still empty, use hardcoded data for testing
-                        if (displayName.isEmpty()) {
-                            displayName = "praneet singh";
-                            displayPhone = "8851271943";
-                            displayAddress = "hardev nagar";
-                        }
-                        
-                        // Try to update the profile with stored data
-                        if (!displayName.isEmpty() && !displayPhone.isEmpty() && !displayAddress.isEmpty()) {
-                            updateProfileWithStoredData(displayName, displayPhone, displayAddress);
-                        }
-                    }
-                    
-                    profileName.setText(displayName);
+                    Log.d("ProfileUI", "Setting UI: name=" + name + ", phone=" + phone + ", address=" + address);
+                    profileName.setText(name);
                     profileEmail.setText("Email: " + SupabaseManager.getCurrentUserEmail());
-                    profilePhone.setText(displayPhone);
-                    profileAddress.setText(displayAddress);
-                    
-                    Log.d("AccountActivity", "Displaying - Name: " + displayName + ", Phone: " + displayPhone + ", Address: " + displayAddress);
+                    profilePhone.setText(phone);
+                    profileAddress.setText(address);
+                    Log.d("AccountActivity", "Displaying - Name: " + name + ", Phone: " + phone + ", Address: " + address);
+                    // Fetch is_admin from profile
+                    fetchIsAdminAndShowAdminSection();
                 });
             }
-            
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    // If there's an error, use hardcoded data for testing
-                    String displayName = storedName.isEmpty() ? "praneet singh" : storedName;
-                    String displayPhone = storedPhone.isEmpty() ? "8851271943" : storedPhone;
-                    String displayAddress = storedAddress.isEmpty() ? "hardev nagar" : storedAddress;
-                    
-                    profileName.setText(displayName);
+                    profileName.setText("");
                     profileEmail.setText("Email: " + SupabaseManager.getCurrentUserEmail());
-                    profilePhone.setText(displayPhone);
-                    profileAddress.setText(displayAddress);
-                    
-                    // Try to create/update profile with stored data
-                    if (!displayName.isEmpty() && !displayPhone.isEmpty() && !displayAddress.isEmpty()) {
-                        updateProfileWithStoredData(displayName, displayPhone, displayAddress);
-                    }
-                    
-                    Log.d("AccountActivity", "Error case - Displaying - Name: " + displayName + ", Phone: " + displayPhone + ", Address: " + displayAddress);
+                    profilePhone.setText("");
+                    profileAddress.setText("");
+                    Log.d("AccountActivity", "Error case - Displaying empty profile fields");
                 });
             }
         });
@@ -521,5 +505,108 @@ public class AccountActivity extends AppCompatActivity {
     private boolean isValidEmail(String email) {
         String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
         return email.matches(emailPattern);
+    }
+
+    private void fetchIsAdminAndShowAdminSection() {
+        new Thread(() -> {
+            try {
+                String userId = SupabaseManager.getCurrentUserId();
+                String supabaseUrl = "https://xqofxqnwohkpbdtpotya.supabase.co/rest/v1/profiles";
+                HttpUrl url = HttpUrl.parse(supabaseUrl)
+                    .newBuilder()
+                    .addQueryParameter("id", "eq." + userId)
+                    .addQueryParameter("select", "is_admin")
+                    .build();
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SupabaseManager.SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + SupabaseManager.getStoredAccessToken())
+                    .get()
+                    .build();
+                try (Response response = client.newCall(request).execute()) {
+                    boolean isAdmin = false;
+                    if (response.isSuccessful()) {
+                        String body = response.body() != null ? response.body().string() : "";
+                        JSONArray arr = new JSONArray(body);
+                        if (arr.length() > 0) {
+                            JSONObject obj = arr.getJSONObject(0);
+                            isAdmin = obj.optBoolean("is_admin", false);
+                        }
+                    }
+                    boolean finalIsAdmin = isAdmin;
+                    runOnUiThread(() -> showAdminSection(finalIsAdmin));
+                }
+            } catch (Exception e) {
+                runOnUiThread(() -> showAdminSection(false));
+            }
+        }).start();
+    }
+
+    private void showAdminSection(boolean isAdmin) {
+        adminSection.removeAllViews();
+        if (isAdmin) {
+            adminSection.setVisibility(View.VISIBLE);
+            // Card-like container
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
+            card.setPadding(32, 32, 32, 32);
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cardParams.setMargins(0, 48, 0, 0);
+            card.setLayoutParams(cardParams);
+            card.setElevation(12f);
+
+            // Heading
+            TextView heading = new TextView(this);
+            heading.setText("🛡️ Admin Panel");
+            heading.setTextSize(20);
+            heading.setTypeface(null, Typeface.BOLD);
+            heading.setTextColor(Color.parseColor("#222222"));
+            heading.setGravity(Gravity.CENTER);
+            heading.setPadding(0, 0, 0, 24);
+            card.addView(heading);
+
+            // Buttons
+            Button productsBtn = new Button(this);
+            productsBtn.setText("Manage Products");
+            styleAdminButton(productsBtn);
+            productsBtn.setOnClickListener(v -> {
+                startActivity(new android.content.Intent(this, AdminProductActivity.class));
+            });
+
+            Button ordersBtn = new Button(this);
+            ordersBtn.setText("Manage Orders");
+            styleAdminButton(ordersBtn);
+            ordersBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, OrderActivity.class)));
+
+            Button usersBtn = new Button(this);
+            usersBtn.setText("Manage Users");
+            styleAdminButton(usersBtn);
+            usersBtn.setOnClickListener(v -> Toast.makeText(this, "Manage Users (admin)", Toast.LENGTH_SHORT).show());
+
+            card.addView(productsBtn);
+            card.addView(ordersBtn);
+            card.addView(usersBtn);
+
+            adminSection.addView(card);
+        } else {
+            adminSection.setVisibility(View.GONE);
+        }
+    }
+
+    // Helper to style admin buttons
+    private void styleAdminButton(Button btn) {
+        btn.setAllCaps(true);
+        btn.setTextSize(16);
+        btn.setTypeface(null, Typeface.BOLD);
+        btn.setTextColor(Color.WHITE);
+        btn.setBackgroundResource(R.drawable.button_green_rounded);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 16, 0, 0);
+        btn.setLayoutParams(params);
+        btn.setPadding(0, 36, 0, 36);
     }
 } 
