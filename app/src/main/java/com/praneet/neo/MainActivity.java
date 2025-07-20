@@ -23,6 +23,8 @@ import android.content.Intent;
 import android.widget.HorizontalScrollView;
 import com.praneet.neo.SupabaseManager;
 import com.praneet.neo.ProductDatabaseManager;
+import android.widget.ImageButton;
+import android.graphics.Color;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -32,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService executor;
     private List<Product> allProducts;
     private Set<String> availableCategories;
+    // Store favorite product IDs for the current user
+    private HashSet<Long> favoriteProductIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
         setupViewAllButton();
         setupUserProfileSection();
         loadProducts();
+        // Fetch favorites for the current user
+        fetchFavoritesForCurrentUser();
     }
 
     private void initializeViews() {
@@ -581,6 +587,55 @@ public class MainActivity extends AppCompatActivity {
         detailsContainer.setOrientation(LinearLayout.VERTICAL);
         detailsContainer.setPadding(0, 12, 0, 0);
         
+        // Favorite (heart) button
+        ImageButton favButton = new ImageButton(this);
+        favButton.setBackgroundColor(Color.TRANSPARENT);
+        favButton.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
+        favButton.setPadding(0, 0, 0, 0);
+        LinearLayout.LayoutParams favParams = new LinearLayout.LayoutParams(
+            80, 80);
+        favParams.setMargins(0, 0, 0, 0);
+        favButton.setLayoutParams(favParams);
+        boolean isFav = favoriteProductIds.contains((long) product.getId());
+        favButton.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+        favButton.setColorFilter(isFav ? Color.RED : Color.GRAY);
+        favButton.setContentDescription(isFav ? "Remove from favorites" : "Add to favorites");
+        favButton.setOnClickListener(v -> {
+            if (favoriteProductIds.contains((long) product.getId())) {
+                SupabaseManager.removeFavorite(product.getId(), new SupabaseManager.AuthCallback() {
+                    @Override
+                    public void onSuccess(String msg) {
+                        runOnUiThread(() -> {
+                            favoriteProductIds.remove((long) product.getId());
+                            favButton.setImageResource(android.R.drawable.btn_star_big_off);
+                            favButton.setColorFilter(Color.GRAY);
+                            favButton.setContentDescription("Add to favorites");
+                        });
+                    }
+                    @Override
+                    public void onError(String err) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to remove favorite", Toast.LENGTH_SHORT).show());
+                    }
+                });
+            } else {
+                SupabaseManager.addFavorite(product.getId(), new SupabaseManager.AuthCallback() {
+                    @Override
+                    public void onSuccess(String msg) {
+                        runOnUiThread(() -> {
+                            favoriteProductIds.add((long) product.getId());
+                            favButton.setImageResource(android.R.drawable.btn_star_big_on);
+                            favButton.setColorFilter(Color.RED);
+                            favButton.setContentDescription("Remove from favorites");
+                        });
+                    }
+                    @Override
+                    public void onError(String err) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to add favorite", Toast.LENGTH_SHORT).show());
+                    }
+                });
+            }
+        });
+
         // Product title
         TextView titleView = new TextView(this);
         titleView.setText(product.getTitle());
@@ -631,6 +686,8 @@ public class MainActivity extends AppCompatActivity {
         detailsContainer.addView(titleView);
         detailsContainer.addView(descView);
         detailsContainer.addView(priceView);
+        // Add favorite button above Add to Cart
+        detailsContainer.addView(favButton);
         detailsContainer.addView(addToCartButton);
         
         // Add to main card container
@@ -704,11 +761,34 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void fetchFavoritesForCurrentUser() {
+        SupabaseManager.getFavorites(new SupabaseManager.FavoritesCallback() {
+            @Override
+            public void onSuccess(List<Long> productIds) {
+                runOnUiThread(() -> {
+                    favoriteProductIds.clear();
+                    favoriteProductIds.addAll(productIds);
+                    // Refresh product list UI if needed
+                    displayProducts(allProducts);
+                });
+            }
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    favoriteProductIds.clear();
+                    displayProducts(allProducts);
+                });
+            }
+        });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         // Update user profile UI when returning from account page
         updateUserProfileUI();
+        // Refresh favorites in case user switched accounts
+        fetchFavoritesForCurrentUser();
     }
     
     @Override

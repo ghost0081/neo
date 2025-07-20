@@ -8,6 +8,9 @@ import java.io.IOException;
 import okhttp3.*;
 import java.util.concurrent.TimeUnit;
 import android.content.SharedPreferences;
+import okhttp3.HttpUrl;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SupabaseManager {
     private static final String TAG = "SupabaseManager";
@@ -593,5 +596,124 @@ public class SupabaseManager {
     public static String getStoredUserAddress() {
         SharedPreferences prefs = context.getSharedPreferences("SupabasePrefs", Context.MODE_PRIVATE);
         return prefs.getString("user_address", "");
+    }
+
+    // Add a favorite
+    public static void addFavorite(long productId, AuthCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                JSONObject bodyJson = new JSONObject();
+                bodyJson.put("user_id", userId);
+                bodyJson.put("product_id", productId);
+
+                RequestBody body = RequestBody.create(
+                    MediaType.parse("application/json"), bodyJson.toString());
+
+                Request request = new Request.Builder()
+                    .url(SUPABASE_URL + "/rest/v1/favorites")
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build();
+
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        callback.onSuccess("Added to favorites");
+                    } else {
+                        callback.onError("Failed to add favorite: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Remove a favorite
+    public static void removeFavorite(long productId, AuthCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                HttpUrl url = HttpUrl.parse(SUPABASE_URL + "/rest/v1/favorites")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .addQueryParameter("product_id", "eq." + productId)
+                    .build();
+
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .delete()
+                    .build();
+
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        callback.onSuccess("Removed from favorites");
+                    } else {
+                        callback.onError("Failed to remove favorite: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Get all favorite product IDs for the current user
+    public static void getFavorites(FavoritesCallback callback) {
+        new Thread(() -> {
+            try {
+                String userId = getCurrentUserId();
+                if (userId == null || userId.isEmpty()) {
+                    callback.onError("User not logged in");
+                    return;
+                }
+                HttpUrl url = HttpUrl.parse(SUPABASE_URL + "/rest/v1/favorites")
+                    .newBuilder()
+                    .addQueryParameter("user_id", "eq." + userId)
+                    .build();
+
+                Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + getStoredAccessToken())
+                    .get()
+                    .build();
+
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+                        JSONArray arr = new JSONArray(responseBody);
+                        List<Long> productIds = new ArrayList<>();
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject obj = arr.getJSONObject(i);
+                            productIds.add(obj.getLong("product_id"));
+                        }
+                        callback.onSuccess(productIds);
+                    } else {
+                        callback.onError("Failed to fetch favorites: " + response.code());
+                    }
+                }
+            } catch (Exception e) {
+                callback.onError("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Callback for getting favorites
+    public interface FavoritesCallback {
+        void onSuccess(List<Long> productIds);
+        void onError(String error);
     }
 } 

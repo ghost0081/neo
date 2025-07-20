@@ -107,33 +107,36 @@ public class CartManager {
         return total;
     }
     
-    // Clear cart
-    public void clearCart() {
-        cartItems.clear();
-        saveCartItems();
-        Log.d(TAG, "Cart cleared");
-    }
-    
     // Check if cart is empty
     public boolean isCartEmpty() {
         return cartItems.isEmpty();
     }
     
+    private String getCartKeyForCurrentUser() {
+        String email = SupabaseManager.getCurrentUserEmail();
+        if (email == null || email.isEmpty()) {
+            return CART_ITEMS_KEY + "_guest";
+        }
+        // Sanitize email for use as a key
+        return CART_ITEMS_KEY + "_" + email.replace("@", "_at_").replace(".", "_dot_");
+    }
+
     // Save cart items to SharedPreferences
     private void saveCartItems() {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         String json = gson.toJson(cartItems);
-        prefs.edit().putString(CART_ITEMS_KEY, json).apply();
-        Log.d(TAG, "Cart items saved: " + cartItems.size() + " items");
+        String key = getCartKeyForCurrentUser();
+        prefs.edit().putString(key, json).apply();
+        Log.d(TAG, "Cart items saved for key: " + key + ", count: " + cartItems.size());
         Log.d(TAG, "Saved JSON: " + json);
     }
-    
+
     // Load cart items from SharedPreferences
     private void loadCartItems() {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        String json = prefs.getString(CART_ITEMS_KEY, "[]");
-        Log.d(TAG, "Loading cart items from JSON: " + json);
-        
+        String key = getCartKeyForCurrentUser();
+        String json = prefs.getString(key, "[]");
+        Log.d(TAG, "Loading cart items for key: " + key + ", JSON: " + json);
         try {
             Type type = new TypeToken<ArrayList<CartItem>>(){}.getType();
             List<CartItem> loadedItems = gson.fromJson(json, type);
@@ -149,5 +152,17 @@ public class CartManager {
             e.printStackTrace();
             cartItems = new ArrayList<>();
         }
+    }
+
+    // Call this on login to load the correct cart
+    public void refreshCartForCurrentUser() {
+        loadCartItems();
+    }
+
+    // Clear cart (in-memory only)
+    public void clearCart() {
+        cartItems.clear();
+        saveCartItems();
+        Log.d(TAG, "Cart cleared");
     }
 } 

@@ -294,6 +294,8 @@ public class AccountActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
                     showLoginForm();
+                    // Refresh cart for guest/next user
+                    CartManager.getInstance(AccountActivity.this).refreshCartForCurrentUser();
                 });
             }
             
@@ -328,6 +330,8 @@ public class AccountActivity extends AppCompatActivity {
         registerForm.setVisibility(View.GONE);
         userProfile.setVisibility(View.VISIBLE);
         toggleMode.setVisibility(View.GONE); // Hide toggle after login
+        // Refresh cart for the current user
+        CartManager.getInstance(this).refreshCartForCurrentUser();
         
         // Show loading state
         profileName.setText("Loading profile...");
