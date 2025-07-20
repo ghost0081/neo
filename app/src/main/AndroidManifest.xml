@@ -44,6 +44,14 @@
             android:name=".AccountActivity"
             android:exported="false"
             android:label="Account" />
+        <activity
+            android:name=".DatabaseSyncActivity"
+            android:exported="false"
+            android:label="Database Sync" />
+        <activity
+            android:name=".DatabaseTestActivity"
+            android:exported="false"
+            android:label="Database Test" />
     </application>
 
 </manifest>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Database Test Console"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/logText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ready to test...\n"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:background="#F5F5F5"
+            android:padding="8dp"
+            android:textColor="#333333" />
+
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/testDummyApiButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test Dummy API Connection"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/testSupabaseButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test Supabase Connection"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#2196F3"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/testSyncButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test Full Sync Operation"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#FF9800"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/clearLogButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Log"
+            android:backgroundTint="#9E9E9E"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+
+</LinearLayout> 

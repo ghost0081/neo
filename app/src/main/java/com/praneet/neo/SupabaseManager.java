@@ -393,7 +393,7 @@ public class SupabaseManager {
     }
     
     // Get stored access token
-    private static String getStoredAccessToken() {
+    public static String getStoredAccessToken() {
         SharedPreferences prefs = context.getSharedPreferences("SupabasePrefs", Context.MODE_PRIVATE);
         return prefs.getString("access_token", "");
     }

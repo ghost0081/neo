@@ -12,8 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.praneet.neo.model.Product;
-import com.praneet.neo.network.NetworkManager;
-import com.praneet.neo.network.ProductApiService;
 import com.praneet.neo.repository.ProductRepository;
 import com.praneet.neo.repository.ProductRepositoryImpl;
 import java.util.HashSet;
@@ -24,6 +22,7 @@ import java.util.concurrent.Executors;
 import android.content.Intent;
 import android.widget.HorizontalScrollView;
 import com.praneet.neo.SupabaseManager;
+import com.praneet.neo.ProductDatabaseManager;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -32,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
     private ProductRepository productRepository;
     private ExecutorService executor;
     private List<Product> allProducts;
-    private TextView statusText;
     private Set<String> availableCategories;
 
     @Override
@@ -40,8 +38,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        // Initialize Supabase
+        // Initialize managers
         SupabaseManager.initialize(this);
+        ProductDatabaseManager.initialize(this);
         
         // Open cart page when cart button is clicked
         LinearLayout cartButton = findViewById(R.id.bottom_nav_cart);
@@ -53,11 +52,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
         // Responsive bottom navbar buttons
         findViewById(R.id.bottom_nav_home).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Already on home, do nothing or refresh
                 Toast.makeText(MainActivity.this, "Home clicked", Toast.LENGTH_SHORT).show();
             }
         });
@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         setupRepository();
         setupSearchFunctionality();
+        setupViewAllButton();
         loadProducts();
     }
 
@@ -93,21 +94,11 @@ public class MainActivity extends AppCompatActivity {
         searchInput = findViewById(R.id.search_input);
         categoryContainer = findViewById(R.id.category_container);
         productContainer = findViewById(R.id.product_container);
-        
-        // Add status text for API feedback
-        statusText = new TextView(this);
-        statusText.setText("Loading products from DummyJSON API...");
-        statusText.setTextSize(14);
-        statusText.setGravity(android.view.Gravity.CENTER);
-        statusText.setPadding(32, 16, 32, 16);
-        statusText.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
-        productContainer.addView(statusText);
     }
 
     private void setupRepository() {
         executor = Executors.newSingleThreadExecutor();
-        ProductApiService apiService = NetworkManager.getInstance().getProductApiService();
-        productRepository = new ProductRepositoryImpl(apiService);
+        productRepository = new ProductRepositoryImpl();
     }
 
     private void setupSearchFunctionality() {
@@ -130,35 +121,51 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setupViewAllButton() {
+        TextView viewAllButton = findViewById(R.id.view_all_button);
+        if (viewAllButton != null) {
+            viewAllButton.setOnClickListener(v -> {
+                // Show all products without any filtering
+                if (allProducts != null) {
+                    displayProducts(allProducts);
+                    Toast.makeText(this, "📋 Showing all " + allProducts.size() + " products", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "❌ No products available", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
     private void loadProducts() {
         executor.execute(() -> {
             try {
-                System.out.println("🔍 Starting API call to DummyJSON...");
+                System.out.println("📊 Loading products from database...");
+                
+                // Load products directly from database
                 List<Product> products = productRepository.getProducts();
-                System.out.println("✅ API call successful, got " + (products != null ? products.size() : 0) + " products");
+                System.out.println("✅ Database load successful, got " + (products != null ? products.size() : 0) + " products");
                 allProducts = products;
+                
                 runOnUiThread(() -> {
                     if (products != null && !products.isEmpty()) {
                         createDynamicCategoryNavbar(products);
                         displayProducts(products);
                         Toast.makeText(MainActivity.this, 
-                            "✅ Loaded " + products.size() + " products from DummyJSON API!", 
+                            "✅ Loaded " + products.size() + " products from database!", 
                             Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(MainActivity.this, 
-                            "❌ No products loaded from API", 
+                            "❌ No products found in database", 
                             Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (Exception e) {
-                System.out.println("❌ API call failed: " + e.getMessage());
+                System.out.println("❌ Database operation failed: " + e.getMessage());
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     Toast.makeText(MainActivity.this, 
-                        "❌ Error loading from DummyJSON API: " + e.getMessage(), 
+                        "❌ Error loading from database: " + e.getMessage(), 
                         Toast.LENGTH_LONG).show();
-                    statusText.setText("❌ Failed to load from DummyJSON API: " + e.getMessage());
-                    statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
                 });
             }
         });
@@ -421,22 +428,13 @@ public class MainActivity extends AppCompatActivity {
         
         if (products == null || products.isEmpty()) {
             TextView noProductsText = new TextView(this);
-            noProductsText.setText("No products found in DummyJSON API");
+            noProductsText.setText("No products found in database");
             noProductsText.setTextSize(16);
             noProductsText.setGravity(android.view.Gravity.CENTER);
             noProductsText.setPadding(32, 32, 32, 32);
             productContainer.addView(noProductsText);
             return;
         }
-
-        // Add status showing API data
-        TextView apiStatusText = new TextView(this);
-        apiStatusText.setText("📡 DummyJSON API Data: " + products.size() + " products loaded");
-        apiStatusText.setTextSize(12);
-        apiStatusText.setGravity(android.view.Gravity.CENTER);
-        apiStatusText.setPadding(16, 8, 16, 8);
-        apiStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-        productContainer.addView(apiStatusText);
 
         // Create grid layout for products
         LinearLayout gridContainer = new LinearLayout(this);

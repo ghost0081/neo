@@ -97,6 +97,8 @@
                 android:textColor="#1A1A1A"
                 android:textColorHint="#9E9E9E" />
         </LinearLayout>
+
+
     </LinearLayout>
 
     <!-- Category Navigation -->
@@ -143,6 +145,7 @@
                 android:textColor="#1A1A1A" />
 
             <TextView
+                android:id="@+id/view_all_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="View All"
