@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "412988290091",
+    "project_id": "neooo-cbca0",
+    "storage_bucket": "neooo-cbca0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412988290091:android:825cad91d14dbaa9abe66e",
+        "android_client_info": {
+          "package_name": "com.praneet.neo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYLduh3t-WpRCmGDett8g-sclM5WDU0Wc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -439,15 +439,15 @@ public class MainActivity extends AppCompatActivity {
                 List<Product> products = productRepository.searchProducts(query);
                 runOnUiThread(() -> {
                     displayProducts(products);
-                    Toast.makeText(MainActivity.this, 
-                        "🔍 Found " + (products != null ? products.size() : 0) + " products for '" + query + "'", 
-                        Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this,
+                            "🔍 Found " + (products != null ? products.size() : 0) + " products for '" + query + "'",
+                            Toast.LENGTH_SHORT).show();
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, 
-                        "❌ Search error: " + e.getMessage(), 
-                        Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this,
+                            "❌ Search error: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
             }
         });

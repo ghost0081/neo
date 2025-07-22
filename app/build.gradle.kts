@@ -58,4 +58,9 @@ dependencies {
     implementation("io.ktor:ktor-client-android:2.3.7")
     implementation("io.ktor:ktor-client-core:2.3.7")
     implementation("io.ktor:ktor-client-cio:2.3.7")
+    // Algolia dependencies removed
+    implementation("com.google.firebase:firebase-messaging:23.0.0")
+    implementation("com.google.firebase:firebase-analytics:21.0.0")
 }
+
+apply(plugin = "com.google.gms.google-services")
