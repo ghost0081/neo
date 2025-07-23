@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Neo" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.Neo" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
     
     <!-- Theme for activities that need action bar but without camera icon -->
-    <style name="Theme.Neo.ActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="Theme.Neo.ActionBar" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="android:windowActionBar">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="actionBarStyle">@style/Widget.AppCompat.ActionBar</item>

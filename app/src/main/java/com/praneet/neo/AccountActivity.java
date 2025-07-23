@@ -265,7 +265,11 @@ public class AccountActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
-                        registerStatus.setText(error);
+                        if (error.toLowerCase().contains("already registered") || error.toLowerCase().contains("user already exists") || error.toLowerCase().contains("email")) {
+                            registerStatus.setText("A user with this email already exists.");
+                        } else {
+                            registerStatus.setText(error);
+                        }
                         registerStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
                         registerButton.setEnabled(true);
                         registerButton.setText("Create Account");

@@ -350,12 +350,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="36dp"
+        android:layout_marginEnd="32dp"
         android:layout_marginBottom="96dp"
         android:src="@android:drawable/ic_dialog_email"
         android:contentDescription="Chat with us"
         android:tint="@android:color/white"
-        android:backgroundTint="@color/teal_700" />
+        android:backgroundTint="@color/teal_700"
+        android:foreground="?attr/selectableItemBackgroundBorderless" />
 
     <!-- Overlay for Chat WebView (fixed size, always visible when shown) -->
     <FrameLayout
@@ -364,7 +365,8 @@
         android:layout_height="match_parent"
         android:visibility="gone"
         android:background="#80000000"
-        android:gravity="end|bottom">
+        android:gravity="end|bottom"
+        android:animateLayoutChanges="true">
 
         <androidx.cardview.widget.CardView
             android:layout_width="320dp"
@@ -373,29 +375,58 @@
             android:layout_marginBottom="120dp"
             android:layout_gravity="end|bottom"
             app:cardCornerRadius="18dp"
-            app:cardElevation="12dp">
+            app:cardElevation="12dp"
+            android:background="@android:color/white"
+            >
 
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <!-- Title bar -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="#F5F5F5">
+
+                    <TextView
+                        android:id="@+id/chat_popup_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chat Support"
+                        android:textStyle="bold"
+                        android:textColor="#222"
+                        android:textSize="16sp"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="16dp" />
+
+                    <ImageButton
+                        android:id="@+id/close_chat"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@android:color/transparent"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:contentDescription="Close chat"
+                        android:tint="#333"
+                        android:padding="8dp" />
+                </RelativeLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0" />
 
                 <WebView
                     android:id="@+id/chat_webview"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="40dp" />
-
-                <ImageButton
-                    android:id="@+id/close_chat"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_gravity="top|end"
-                    android:background="@android:color/transparent"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    android:contentDescription="Close chat"
-                    android:tint="#333"
-                    android:padding="8dp" />
-            </FrameLayout>
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/white" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
     </FrameLayout>
 </FrameLayout> 
