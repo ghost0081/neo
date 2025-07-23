@@ -61,6 +61,7 @@ dependencies {
     // Algolia dependencies removed
     implementation("com.google.firebase:firebase-messaging:23.0.0")
     implementation("com.google.firebase:firebase-analytics:21.0.0")
+    implementation("androidx.cardview:cardview:1.0.0")
 }
 
 apply(plugin = "com.google.gms.google-services")

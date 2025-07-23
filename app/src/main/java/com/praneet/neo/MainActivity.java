@@ -27,6 +27,10 @@ import android.widget.ImageButton;
 import android.graphics.Color;
 import android.widget.FrameLayout;
 import com.praneet.neo.model.CartItem;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchInput;
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Set<String> availableCategories;
     // Store favorite product IDs for the current user
     private HashSet<Long> favoriteProductIds = new HashSet<>();
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +59,12 @@ public class MainActivity extends AppCompatActivity {
         SupabaseManager.initialize(this);
         ProductDatabaseManager.initialize(this);
         
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        // Log a sample event for opening the home screen
+        Bundle params = new Bundle();
+        params.putString("screen_name", "HomeScreen");
+        mFirebaseAnalytics.logEvent("screen_view", params);
+
         // Open cart page when cart button is clicked
         LinearLayout cartButton = findViewById(R.id.bottom_nav_cart);
         cartButton.setOnClickListener(new View.OnClickListener() {
@@ -64,6 +75,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Hide the old chat button
+        Button chatButton = findViewById(R.id.chat_button);
+        chatButton.setVisibility(View.GONE);
+
+        // Floating chat bubble and overlay logic
+        View fabChat = findViewById(R.id.fab_chat);
+        View chatOverlay = findViewById(R.id.chat_overlay);
+        ImageButton closeChat = findViewById(R.id.close_chat);
+        WebView chatWebView = findViewById(R.id.chat_webview);
+
+        fabChat.setOnClickListener(v -> {
+            chatOverlay.setVisibility(View.VISIBLE);
+            // Only load once per session for performance
+            if (chatWebView.getUrl() == null) {
+                WebSettings webSettings = chatWebView.getSettings();
+                webSettings.setJavaScriptEnabled(true);
+                webSettings.setDomStorageEnabled(true);
+                webSettings.setLoadWithOverviewMode(true);
+                webSettings.setUseWideViewPort(true);
+                webSettings.setUserAgentString(
+                    "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Mobile Safari/537.36");
+                chatWebView.setWebViewClient(new WebViewClient());
+                chatWebView.loadUrl("file:///android_asset/tawk.html");
+            }
+        });
+
+        closeChat.setOnClickListener(v -> {
+            chatOverlay.setVisibility(View.GONE);
+        });
 
 
         // Responsive bottom navbar buttons

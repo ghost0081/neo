@@ -1,189 +1,203 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F8F9FA">
+    android:layout_height="match_parent">
 
-    <!-- Header with User Profile -->
+    <!-- Main vertical content -->
     <LinearLayout
+        android:id="@+id/main_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:elevation="4dp"
-        android:padding="@dimen/header_padding">
+        android:background="#F8F9FA">
 
-        <!-- User Profile Row -->
+        <!-- Header with User Profile -->
         <LinearLayout
-            android:id="@+id/user_profile_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="8dp">
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:elevation="4dp"
+            android:padding="@dimen/header_padding">
 
-            <!-- Profile Picture -->
+            <!-- User Profile Row -->
             <LinearLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/circle_background"
-                android:gravity="center"
-                android:layout_marginEnd="@dimen/spacing_medium">
+                android:id="@+id/user_profile_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="8dp">
 
+                <!-- Profile Picture -->
+                <LinearLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/circle_background"
+                    android:gravity="center"
+                    android:layout_marginEnd="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👤"
+                        android:textSize="24sp" />
+                </LinearLayout>
+
+                <!-- Welcome Text -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/welcome_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Welcome"
+                        android:textSize="@dimen/small_text_size"
+                        android:textColor="#666666" />
+
+                    <TextView
+                        android:id="@+id/user_name_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Login / Signup"
+                        android:textSize="@dimen/body_text_size"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50" />
+                </LinearLayout>
+
+                <!-- Notification Bell -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="👤"
-                    android:textSize="24sp" />
+                    android:text="🔔"
+                    android:textSize="24sp"
+                    android:padding="8dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless" />
             </LinearLayout>
 
-            <!-- Welcome Text -->
+            <!-- Search Bar -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:background="#F5F5F5"
+                android:padding="@dimen/search_padding"
+                android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/welcome_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome"
-                    android:textSize="@dimen/small_text_size"
-                    android:textColor="#666666" />
+                    android:text="🔍"
+                    android:textSize="@dimen/search_icon_size"
+                    android:layout_marginEnd="@dimen/spacing_small" />
 
-                <TextView
-                    android:id="@+id/user_name_text"
-                    android:layout_width="wrap_content"
+                <EditText
+                    android:id="@+id/search_input"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Login / Signup"
+                    android:layout_weight="1"
+                    android:hint="Search here..."
                     android:textSize="@dimen/body_text_size"
-                    android:textStyle="bold"
-                    android:textColor="#4CAF50" />
+                    android:background="@null"
+                    android:textColor="#1A1A1A"
+                    android:textColorHint="#9E9E9E" />
             </LinearLayout>
 
-            <!-- Notification Bell -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔔"
-                android:textSize="24sp"
-                android:padding="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless" />
+
         </LinearLayout>
 
-        <!-- Search Bar -->
+        <!-- Category Navigation -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#F5F5F5"
-            android:padding="@dimen/search_padding"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔍"
-                android:textSize="@dimen/search_icon_size"
-                android:layout_marginEnd="@dimen/spacing_small" />
-
-            <EditText
-                android:id="@+id/search_input"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="Search here..."
-                android:textSize="@dimen/body_text_size"
-                android:background="@null"
-                android:textColor="#1A1A1A"
-                android:textColorHint="#9E9E9E" />
-        </LinearLayout>
-
-
-    </LinearLayout>
-
-    <!-- Category Navigation -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:elevation="2dp"
-        android:padding="@dimen/section_padding">
-
-        <LinearLayout
-            android:id="@+id/category_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </LinearLayout>
-
-
-
-    <!-- Popular Items Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="@dimen/section_padding">
-
-        <!-- Section Header -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="@dimen/spacing_medium">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Popular Items"
-                android:textSize="@dimen/section_title_size"
-                android:textStyle="bold"
-                android:textColor="#1A1A1A" />
-
-            <TextView
-                android:id="@+id/view_all_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="View All"
-                android:textSize="@dimen/body_text_size"
-                android:textColor="#4CAF50"
-                android:padding="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless" />
-        </LinearLayout>
-
-        <!-- Product Grid -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="none">
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:elevation="2dp"
+            android:padding="@dimen/section_padding">
 
             <LinearLayout
-                android:id="@+id/product_container"
+                android:id="@+id/category_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
-        </ScrollView>
+        </LinearLayout>
+
+
+
+        <!-- Popular Items Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="@dimen/section_padding">
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/spacing_medium">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Popular Items"
+                    android:textSize="@dimen/section_title_size"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A" />
+
+                <TextView
+                    android:id="@+id/view_all_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All"
+                    android:textSize="@dimen/body_text_size"
+                    android:textColor="#4CAF50"
+                    android:padding="8dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless" />
+            </LinearLayout>
+
+            <!-- Product Grid -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/product_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+        </LinearLayout>
+
+        <!-- Spacer to make room for navbar -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="72dp" />
     </LinearLayout>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation anchored to bottom -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="#FFFFFF"
         android:elevation="8dp"
-        android:padding="@dimen/bottom_nav_padding">
+        android:padding="@dimen/bottom_nav_padding"
+        android:layout_gravity="bottom">
 
         <!-- Home -->
         <LinearLayout
@@ -320,4 +334,68 @@
                 android:layout_marginTop="@dimen/spacing_small" />
         </LinearLayout>
     </LinearLayout>
-</LinearLayout> 
+
+    <Button
+        android:id="@+id/chat_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chat with Support"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:visibility="gone" />
+
+    <!-- Floating Action Button for Chat Bubble, above Account icon -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="36dp"
+        android:layout_marginBottom="96dp"
+        android:src="@android:drawable/ic_dialog_email"
+        android:contentDescription="Chat with us"
+        android:tint="@android:color/white"
+        android:backgroundTint="@color/teal_700" />
+
+    <!-- Overlay for Chat WebView (fixed size, always visible when shown) -->
+    <FrameLayout
+        android:id="@+id/chat_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="#80000000"
+        android:gravity="end|bottom">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="320dp"
+            android:layout_height="420dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="120dp"
+            android:layout_gravity="end|bottom"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="12dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <WebView
+                    android:id="@+id/chat_webview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="40dp" />
+
+                <ImageButton
+                    android:id="@+id/close_chat"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="top|end"
+                    android:background="@android:color/transparent"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:contentDescription="Close chat"
+                    android:tint="#333"
+                    android:padding="8dp" />
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+</FrameLayout> 
